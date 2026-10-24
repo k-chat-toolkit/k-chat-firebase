@@ -2,7 +2,7 @@ import type { Translations } from './en';
 
 /** Vietnamese UI strings. The type makes a missing or misspelled key a compile error. */
 export const vi: Translations = {
-  'app.name': 'K-Chat Starter',
+  'app.name': 'K-Chat Lite',
 
   'common.cancel': 'Hủy',
   'common.save': 'Lưu',

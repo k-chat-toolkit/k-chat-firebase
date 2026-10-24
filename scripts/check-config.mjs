@@ -15,7 +15,7 @@ function fail(message) {
 }
 
 const NOT_CONNECTED = [
-  'This copy of K-Chat Starter is not connected to a Firebase project yet.',
+  'This copy of K-Chat Lite is not connected to a Firebase project yet.',
   '',
   '  npm run setup   connect it to your project (see README.md, "Quick start")',
   '  npm run dev     or try it first on local emulators, no project needed',

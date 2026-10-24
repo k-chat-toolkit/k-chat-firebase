@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "K-Chat Starter on the emulators",
+      "name": "K-Chat Lite on the emulators",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "npm: dev",

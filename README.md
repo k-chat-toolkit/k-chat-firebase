@@ -1,6 +1,6 @@
-# K-Chat Starter
+# K-Chat Lite
 
-A chat app starter kit that runs on Firebase's free **Spark** plan: Angular on Firebase Hosting, Firebase Authentication, and Cloud Firestore. There is no server to run and no bill to pay at low use. Clone it, connect it to your own Firebase project with one command, and deploy.
+A slimmed-down chat app that you host yourself, on Firebase's free **Spark** plan: Angular on Firebase Hosting, Firebase Authentication and Cloud Firestore. There is no server to run and no bill to pay at low use. Clone it, connect it to your own Firebase project with one command, and deploy your own copy.
 
 The UI follows Slack's layout, with fewer features, and speaks English and Vietnamese.
 
