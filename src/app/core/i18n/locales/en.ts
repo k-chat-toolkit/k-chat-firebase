@@ -1,10 +1,11 @@
 /**
  * English UI strings: the source of truth for translation keys.
  * Every other locale must define exactly these keys (see vi.ts).
- * `{name}` marks a parameter filled in by `I18nService.t()`.
+ * `{name}` marks a parameter filled in by `I18nService.t()`; `{app}` is always the
+ * value of `app.name`, so the app's name is defined once per locale.
  */
 export const en = {
-  'app.name': 'K-Chat',
+  'app.name': 'K-Chat Starter',
 
   'common.cancel': 'Cancel',
   'common.save': 'Save',
@@ -21,7 +22,7 @@ export const en = {
   'locale.vi': 'Tiếng Việt',
 
   'auth.tagline': 'A small, free chat for your group.',
-  'auth.signIn.title': 'Sign in to K-Chat',
+  'auth.signIn.title': 'Sign in to {app}',
   'auth.signUp.title': 'Create your account',
   'auth.reset.title': 'Reset your password',
   'auth.email': 'Email',
@@ -56,7 +57,7 @@ export const en = {
   'errors.joinRefused': "Couldn't join: the code was just reset, or the room is full.",
   'errors.roomGone': 'This room no longer exists, or you are no longer a member.',
 
-  'welcome.title': 'Welcome to K-Chat',
+  'welcome.title': 'Welcome to {app}',
   'welcome.body': 'Pick the name other people will see.',
   'welcome.submit': 'Continue',
   'welcome.otherAccount': 'Use another account',
@@ -147,7 +148,7 @@ export const en = {
   'details.directBody': 'This conversation is only between the two of you.',
 
   'notFound.title': 'Page not found',
-  'notFound.home': 'Back to K-Chat',
+  'notFound.home': 'Back to {app}',
 } as const;
 
 export type TranslationKey = keyof typeof en;

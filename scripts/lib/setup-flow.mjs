@@ -9,7 +9,7 @@ import {
 
 export class SetupError extends Error {}
 
-const APP_NAME = 'K-Chat';
+const APP_NAME = 'K-Chat Starter';
 
 /**
  * Common Firestore locations. Every location has the same free quota; pick the
@@ -59,7 +59,7 @@ export async function runSetup({ cli, prompt, files, log, options }) {
     );
   } else {
     projectId = await prompt.choose(
-      'Which Firebase project should K-Chat use?',
+      `Which Firebase project should ${APP_NAME} use?`,
       projects.map((project) => ({
         label: project.displayName
           ? `${project.displayName} (${project.projectId})`
@@ -154,7 +154,7 @@ export async function runSetup({ cli, prompt, files, log, options }) {
     }
   } else if (defaultDatabase.type === 'DATASTORE_MODE') {
     throw new SetupError(
-      'The (default) database is in Datastore mode. K-Chat needs Firestore in Native mode.',
+      `The (default) database is in Datastore mode. ${APP_NAME} needs Firestore in Native mode.`,
     );
   } else {
     log.info(`Database: (default) in ${defaultDatabase.locationId ?? 'its location'}`);

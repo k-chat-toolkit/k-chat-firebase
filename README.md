@@ -1,4 +1,4 @@
-# K-Chat
+# K-Chat Starter
 
 A chat app starter kit that runs on Firebase's free **Spark** plan: Angular on Firebase Hosting, Firebase Authentication, and Cloud Firestore. There is no server to run and no bill to pay at low use. Clone it, connect it to your own Firebase project with one command, and deploy.
 
@@ -262,7 +262,7 @@ The app uses the plain Firebase JS SDK with Angular signals: no AngularFire, so 
 
 - **Name and texts:**
   - Every UI string is in `src/app/core/i18n/locales/en.ts` and `vi.ts`. The type check fails if a key is missing from a language.
-  - The app name is `app.name`, plus the `<title>` in `src/index.html`.
+  - The app's name is the `app.name` key; other strings say `{app}` and get it filled in. To rename the app, change `app.name` in each locale, the `<title>` in `src/index.html`, and `APP_NAME` in `scripts/lib/setup-flow.mjs` (the name `npm run setup` gives a new web app).
 - **Another language:**
   1. Copy `vi.ts` to, say, `fr.ts` and translate it.
   2. Add `'fr'` to `Locale` and `LOCALES` in `src/app/core/i18n/i18n.service.ts`.
@@ -274,7 +274,7 @@ The app uses the plain Firebase JS SDK with Angular signals: no AngularFire, so 
 
 - **`Could not start Firestore Emulator, port taken`**
   - Another emulator is still running. Stop it, or change the port in `firebase.json`.
-  - On Windows with Oracle's Java, the scripts already work around a launcher that used to leave the emulator running.
+  - On Windows with Oracle's Java, the `java` on PATH is a launcher. If the CLI stops only the launcher, the emulator keeps running. The npm scripts work around this. If you run `npx firebase emulators:*` yourself, put your JDK's `bin` folder first on PATH, or end the leftover `java` process.
 - **`java` not found:** install a JDK (21 or newer) and open a new terminal.
 - **`npm start` / `npm run build` says the copy is not connected:** run `npm run setup`, or use `npm run dev`.
 - **The room list stays empty right after the first deploy:** the composite index is still building. Wait a few minutes and reload.

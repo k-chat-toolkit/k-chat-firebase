@@ -38,6 +38,14 @@ describe('I18nService', () => {
     i18n = TestBed.inject(I18nService);
   });
 
+  it('fills {app} with the app name in every locale', () => {
+    for (const locale of ['en', 'vi'] as const) {
+      i18n.setLocale(locale);
+      expect(i18n.t('welcome.title')).toContain(i18n.t('app.name'));
+      expect(i18n.t('welcome.title')).not.toContain('{app}');
+    }
+  });
+
   it('switches language at once', () => {
     i18n.setLocale('en');
     expect(i18n.t('chat.send')).toBe('Send');

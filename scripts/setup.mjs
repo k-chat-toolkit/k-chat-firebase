@@ -1,4 +1,4 @@
-// npm run setup — connects this copy of K-Chat to your own Firebase project.
+// npm run setup — connects this copy of K-Chat Starter to your own Firebase project.
 //
 // It signs in the Firebase CLI if needed, lets you pick the project and its web app,
 // writes src/environments/environment.firebase.ts and .firebaserc, creates the
