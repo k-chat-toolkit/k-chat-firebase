@@ -71,6 +71,15 @@ export const vi: Translations = {
   'profile.signedInAs': 'Đăng nhập với {email}',
   'profile.saved': 'Đã lưu',
   'profile.signOut': 'Đăng xuất',
+  'profile.notifications': 'Thông báo trên máy',
+  'profile.notificationsBody':
+    'Hiện khi {app} đang mở ở một tab nền, chỉ trên trình duyệt này. Thông báo khi đã đóng app cần server, gói miễn phí không có.',
+  'profile.notifyOff': 'Tắt',
+  'profile.notifyMentions': 'Tin riêng và khi được nhắc tên',
+  'profile.notifyAll': 'Mọi tin nhắn mới',
+  'profile.notifyDenied':
+    'Trình duyệt đang chặn thông báo của trang này. Hãy cho phép trong cài đặt trang rồi chọn lại.',
+  'profile.notifyUnsupported': 'Trình duyệt này không hiện được thông báo.',
 
   'sidebar.rooms': 'Phòng',
   'sidebar.directMessages': 'Tin nhắn riêng',
@@ -108,7 +117,7 @@ export const vi: Translations = {
   'chat.placeholderGroup': 'Nhắn tới #{name}',
   'chat.placeholderDirect': 'Nhắn tới {name}',
   'chat.send': 'Gửi',
-  'chat.composerHint': 'Enter để gửi · Shift+Enter để xuống dòng',
+  'chat.composerHint': 'Enter để gửi · Shift+Enter để xuống dòng · ↑ để sửa',
   'chat.loadOlder': 'Tải tin cũ hơn',
   'chat.beginningGroup': 'Đây là khởi đầu của #{name}.',
   'chat.beginningDirect': 'Đây là khởi đầu cuộc trò chuyện với {name}.',

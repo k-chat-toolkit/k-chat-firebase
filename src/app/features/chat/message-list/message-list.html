@@ -51,6 +51,7 @@
         [highlighted]="row.message.id === flashedId()"
         (replyRequested)="reply.emit($event)"
         (jumpRequested)="jumpTo($event)"
+        (editClosed)="editClosed.emit()"
       />
     }
   }

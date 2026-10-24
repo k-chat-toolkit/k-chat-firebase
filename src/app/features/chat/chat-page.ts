@@ -12,7 +12,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { fromEvent, map, of, switchMap } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
@@ -22,6 +21,7 @@ import { ProfileService } from '@core/data/profile.service';
 import { ReadMarkersService } from '@core/data/read-markers.service';
 import { RoomService } from '@core/data/room.service';
 import { errorMessageKey, isPermissionDenied } from '@core/errors/app-error';
+import { PageTitleService } from '@core/notifications/page-title.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/locales/en';
 import type { ChatMessage } from '@core/models/chat-message';
@@ -48,7 +48,7 @@ export class ChatPage {
   private readonly messages = inject(MessageService);
   private readonly profiles = inject(ProfileService);
   private readonly readMarkers = inject(ReadMarkersService);
-  private readonly title = inject(Title);
+  private readonly pageTitle = inject(PageTitleService);
   private readonly document = inject(DOCUMENT);
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
@@ -158,15 +158,23 @@ export class ChatPage {
 
     effect(() => {
       const name = this.displayName();
-      const app = this.t('app.name');
       const prefix = this.room()?.type === 'group' ? '#' : '';
-      this.title.setTitle(name ? `${prefix}${name} · ${app}` : app);
+      this.pageTitle.set(name ? `${prefix}${name}` : null);
     });
-    inject(DestroyRef).onDestroy(() => this.title.setTitle(this.t('app.name')));
+    inject(DestroyRef).onDestroy(() => this.pageTitle.set(null));
   }
 
   protected toggleDetails(): void {
     this.showDetails.update((open) => !open);
+  }
+
+  /** ArrowUp in an empty box edits your last message, as in Slack. */
+  protected editLast(): void {
+    this.messageList()?.editLastOwn(this.uid());
+  }
+
+  protected focusComposer(): void {
+    this.composer()?.focus();
   }
 
   protected startReply(message: ChatMessage): void {

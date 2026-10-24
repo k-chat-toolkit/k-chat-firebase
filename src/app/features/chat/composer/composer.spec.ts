@@ -118,4 +118,13 @@ describe('Composer', () => {
     press({});
     expect(sent).toEqual(['<@u2> xem nhé']);
   });
+
+  it('asks to edit the last message on ArrowUp, only in an empty box', async () => {
+    let asked = 0;
+    fixture.componentInstance.editLast.subscribe(() => asked++);
+    expect(press({ key: 'ArrowUp' }).defaultPrevented).toBe(true);
+    await type('draft');
+    expect(press({ key: 'ArrowUp' }).defaultPrevented).toBe(false);
+    expect(asked).toBe(1);
+  });
 });

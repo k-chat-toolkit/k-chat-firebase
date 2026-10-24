@@ -7,7 +7,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
 import { CustomEmojiService } from '@core/data/custom-emoji.service';
@@ -16,6 +15,7 @@ import { errorMessageKey } from '@core/errors/app-error';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/locales/en';
 import { LIMITS } from '@core/limits';
+import { PageTitleService } from '@core/notifications/page-title.service';
 import { EMOJI_NAME, suggestEmojiName, type CustomEmoji } from '@core/models/custom-emoji';
 import { foldText, loadUnicodeEmoji } from '@shared/emoji/unicode-emoji';
 import { ConfirmService } from '@shared/ui/confirm-dialog/confirm.service';
@@ -45,7 +45,7 @@ export class EmojiPage {
   private readonly customEmoji = inject(CustomEmojiService);
   private readonly profiles = inject(ProfileService);
   private readonly confirm = inject(ConfirmService);
-  private readonly title = inject(Title);
+  private readonly pageTitle = inject(PageTitleService);
   protected readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
 
@@ -106,8 +106,8 @@ export class EmojiPage {
       () => undefined,
     );
 
-    effect(() => this.title.setTitle(`${this.t('emoji.title')} · ${this.t('app.name')}`));
-    inject(DestroyRef).onDestroy(() => this.title.setTitle(this.t('app.name')));
+    effect(() => this.pageTitle.set(this.t('emoji.title')));
+    inject(DestroyRef).onDestroy(() => this.pageTitle.set(null));
   }
 
   protected async onFile(input: HTMLInputElement): Promise<void> {
