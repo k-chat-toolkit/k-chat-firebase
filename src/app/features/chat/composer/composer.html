@@ -1,14 +1,66 @@
+@if (suggestions().length > 0) {
+  <ul
+    id="composer-suggestions"
+    class="suggestions"
+    role="listbox"
+    [attr.aria-label]="t('composer.suggestions')"
+  >
+    @for (suggestion of suggestions(); track suggestion.id; let index = $index) {
+      <!-- The keyboard stays in the textarea (arrows, Enter, Tab); the mouse picks here. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <li
+        [id]="'composer-option-' + index"
+        role="option"
+        class="suggestion"
+        [class.active]="index === activeIndex()"
+        [attr.aria-selected]="index === activeIndex()"
+        (mousedown)="$event.preventDefault()"
+        (click)="apply(suggestion)"
+        (mouseenter)="activeIndex.set(index)"
+      >
+        <span class="suggestion-glyph" aria-hidden="true">
+          @if (suggestion.image; as image) {
+            <img [src]="image" alt="" />
+          } @else {
+            {{ suggestion.emoji }}
+          }
+        </span>
+        <span class="suggestion-label">{{ suggestion.label }}</span>
+        <span class="suggestion-detail">{{ suggestion.detail }}</span>
+      </li>
+    }
+  </ul>
+}
+
 <form class="box" (submit)="$event.preventDefault(); submit()">
   <textarea
     #textarea
     rows="1"
     [placeholder]="placeholder()"
     [attr.aria-label]="placeholder()"
+    aria-autocomplete="list"
+    [attr.aria-expanded]="suggestions().length > 0"
+    [attr.aria-controls]="suggestions().length > 0 ? 'composer-suggestions' : null"
+    [attr.aria-activedescendant]="activeOptionId()"
     [value]="text()"
     (input)="onInput($any($event.target).value)"
     (keydown)="onKeydown($event)"
+    (keyup)="onCaretMove($event)"
+    (click)="onCaretMove()"
   ></textarea>
   <div class="bar">
+    <button
+      #emojiButton
+      type="button"
+      class="tool"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="pickerAnchor() !== null"
+      [attr.aria-label]="t('composer.emoji')"
+      [attr.title]="t('composer.emoji')"
+      (click)="togglePicker(emojiButton)"
+    >
+      <app-icon name="smile" [size]="18" />
+    </button>
     <span class="hint" [class.hint-error]="left() < 0" aria-live="polite">
       @if (left() < 0) {
         {{ t('common.charactersOver', { count: -left() }) }}
@@ -29,3 +81,7 @@
     </button>
   </div>
 </form>
+
+@if (pickerAnchor(); as anchor) {
+  <app-emoji-picker [anchor]="anchor" (picked)="insertPicked($event)" (closed)="closePicker()" />
+}

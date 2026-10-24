@@ -1,3 +1,4 @@
+import { LIMITS } from '@core/limits';
 import { linkify } from './text';
 
 /** Bold, italic and strikethrough can nest, so every styled piece carries all three. */
@@ -16,6 +17,13 @@ export type Inline =
       readonly href: string;
       readonly style: InlineStyle;
     }
+  /** ":name:", which the UI shows as a custom emoji if one has that name, else as text. */
+  | {
+      readonly kind: 'emoji';
+      readonly text: string;
+      readonly name: string;
+      readonly style: InlineStyle;
+    }
   | { readonly kind: 'code'; readonly text: string };
 
 export type Block =
@@ -28,6 +36,7 @@ const PLAIN: InlineStyle = { bold: false, italic: false, strike: false };
 const FENCE = /```([^]*?)```/g;
 const QUOTE_LINE = /^>[ \t]?/;
 const INLINE_CODE = /`([^`\n]+)`/g;
+const CUSTOM_EMOJI = new RegExp(`:([a-z0-9_-]{1,${LIMITS.emojiNameMaxLength}}):`, 'g');
 
 /**
  * Slack's rule for `*bold*`, `_italic_` and `~strike~`: the opening marker follows the
@@ -40,8 +49,9 @@ const STYLE_SPAN = /(^|[^\p{L}\p{N}])([*_~])(?=\S)([^\n]*?\S)\2(?![\p{L}\p{N}])/
 const STYLE_KEY = { '*': 'bold', _: 'italic', '~': 'strike' } as const;
 
 /**
- * Links are swapped for private-use characters while styles are parsed, so a `_` inside
- * a URL is never read as a marker and a style can still wrap a whole link.
+ * Links and ":name:" tokens are swapped for private-use characters while styles are
+ * parsed, so a `_` inside a URL or a name is never read as a marker, and a style can
+ * still wrap a whole link.
  */
 const PLACEHOLDER_FIRST = 0xe000;
 const PLACEHOLDER_LAST = 0xe7ff;
@@ -111,24 +121,30 @@ function parseInline(text: string): Inline[] {
   return mergeText(inlines);
 }
 
-type Atom = Extract<Inline, { kind: 'link' }>;
+type Atom =
+  | Omit<Extract<Inline, { kind: 'link' }>, 'style'>
+  | Omit<Extract<Inline, { kind: 'emoji' }>, 'style'>;
 
 function styled(text: string): Inline[] {
   if (text === '') return [];
-  const atoms: Omit<Atom, 'style'>[] = [];
+  const atoms: Atom[] = [];
+  const mask = (atom: Atom) => {
+    atoms.push(atom);
+    return String.fromCharCode(PLACEHOLDER_FIRST + atoms.length - 1);
+  };
   let masked = '';
   for (const piece of linkify(text.replace(PLACEHOLDER_RANGE, REPLACEMENT_CHARACTER))) {
-    if (piece.kind === 'link') {
-      masked += String.fromCharCode(PLACEHOLDER_FIRST + atoms.length);
-      atoms.push(piece);
-    } else {
-      masked += piece.text;
-    }
+    masked +=
+      piece.kind === 'link'
+        ? mask(piece)
+        : piece.text.replace(CUSTOM_EMOJI, (token, name: string) =>
+            mask({ kind: 'emoji', text: token, name }),
+          );
   }
   return applyStyles(masked, PLAIN, atoms);
 }
 
-function applyStyles(text: string, style: InlineStyle, atoms: Omit<Atom, 'style'>[]): Inline[] {
+function applyStyles(text: string, style: InlineStyle, atoms: Atom[]): Inline[] {
   const out: Inline[] = [];
   let rest = text;
   for (let match = STYLE_SPAN.exec(rest); match; match = STYLE_SPAN.exec(rest)) {
@@ -142,8 +158,8 @@ function applyStyles(text: string, style: InlineStyle, atoms: Omit<Atom, 'style'
   return out;
 }
 
-/** Puts the links back in place of their placeholders. */
-function unmask(text: string, style: InlineStyle, atoms: Omit<Atom, 'style'>[]): Inline[] {
+/** Puts the links and ":name:" tokens back in place of their placeholders. */
+function unmask(text: string, style: InlineStyle, atoms: Atom[]): Inline[] {
   const out: Inline[] = [];
   let plain = '';
   for (const char of text) {
@@ -189,9 +205,22 @@ const EMOJI_OR_SPACE = new RegExp('^(?:\\p{RGI_Emoji}|\\s)+$', 'v');
 /** Slack shows a message of up to this many emoji, and nothing else, in a large size. */
 export const JUMBO_EMOJI_MAX = 23;
 
-/** True when the text is only emoji (at most JUMBO_EMOJI_MAX) and spaces. */
-export function isJumboEmoji(text: string): boolean {
-  if (!EMOJI_OR_SPACE.test(text)) return false;
-  const count = text.match(EMOJI)?.length ?? 0;
+/**
+ * True when the text is only emoji (at most JUMBO_EMOJI_MAX) and spaces. A ":name:"
+ * token counts as an emoji when `isCustomEmoji(name)` says one exists by that name.
+ */
+export function isJumboEmoji(
+  text: string,
+  isCustomEmoji: (name: string) => boolean = () => false,
+): boolean {
+  let custom = 0;
+  let unknown = false;
+  const rest = text.replace(CUSTOM_EMOJI, (token, name: string) => {
+    if (isCustomEmoji(name)) custom++;
+    else unknown = true;
+    return ' ';
+  });
+  if (unknown || (rest.trim() !== '' && !EMOJI_OR_SPACE.test(rest))) return false;
+  const count = custom + (rest.match(EMOJI)?.length ?? 0);
   return count > 0 && count <= JUMBO_EMOJI_MAX;
 }

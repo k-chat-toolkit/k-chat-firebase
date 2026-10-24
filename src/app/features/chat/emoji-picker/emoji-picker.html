@@ -1,0 +1,98 @@
+<div class="search">
+  <app-icon name="search" [size]="16" />
+  <input
+    #search
+    type="search"
+    class="search-input"
+    [placeholder]="t('emoji.search')"
+    [attr.aria-label]="t('emoji.search')"
+    [value]="query()"
+    (input)="onSearch($any($event.target).value)"
+    (keydown)="onSearchKeydown($event)"
+  />
+</div>
+
+@if (!query().trim()) {
+  <nav class="tabs" [attr.aria-label]="t('emoji.sections')">
+    @for (section of sections(); track section.id) {
+      <button
+        type="button"
+        class="tab"
+        [attr.aria-label]="section.title"
+        [attr.title]="section.title"
+        (click)="showSection(section.id)"
+      >
+        {{ section.icon }}
+      </button>
+    }
+  </nav>
+}
+
+<!-- The cells are buttons; this container only delegates their events. They are reached
+     with the arrow keys (from the search box: ArrowDown), not with Tab. -->
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+<div
+  #scroller
+  class="scroller"
+  (click)="onGridClick($event)"
+  (pointerover)="onGridHover($event)"
+  (focusin)="onGridHover($event)"
+  (keydown)="onGridKeydown($event)"
+>
+  @if (loading()) {
+    <p class="state" role="status">{{ t('common.loading') }}</p>
+  } @else if (loadFailed()) {
+    <p class="state hint-error" role="alert">{{ t('emoji.loadFailed') }}</p>
+  }
+  @for (section of sections(); track section.id) {
+    <section class="section" [attr.data-section]="section.id">
+      <h3 class="section-title">{{ section.title }}</h3>
+      <div class="grid">
+        @for (choice of section.choices; track choice.key) {
+          <button
+            type="button"
+            class="cell"
+            tabindex="-1"
+            [attr.data-key]="choice.key"
+            [attr.aria-label]="choice.label"
+          >
+            @if (choice.image; as image) {
+              <img [src]="image" alt="" />
+            } @else {
+              {{ choice.emoji }}
+            }
+          </button>
+        } @empty {
+          <p class="state">{{ t('emoji.noResults') }}</p>
+        }
+      </div>
+    </section>
+  }
+</div>
+
+<footer class="footer">
+  @if (preview(); as choice) {
+    <span class="preview-glyph" aria-hidden="true">
+      @if (choice.image; as image) {
+        <img [src]="image" alt="" />
+      } @else {
+        {{ choice.emoji }}
+      }
+    </span>
+    <span class="preview-text">
+      <span class="preview-name">{{ choice.label }}</span>
+      <span class="preview-detail">
+        @if (choice.createdBy) {
+          {{ t('emoji.addedByShort', { name: previewAddedBy() ?? '…' }) }}
+        } @else if (choice.shortcode) {
+          :{{ choice.shortcode }}:
+        }
+      </span>
+    </span>
+  } @else {
+    <span class="preview-text muted">{{ t('emoji.pickHint') }}</span>
+  }
+  <a class="btn btn-sm manage" routerLink="/emoji" (click)="closed.emit()">{{
+    t('emoji.manage')
+  }}</a>
+</footer>

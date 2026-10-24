@@ -1,6 +1,73 @@
 :host {
+  position: relative;
   display: block;
   padding: 0 20px 20px;
+}
+
+.suggestions {
+  position: absolute;
+  right: 20px;
+  bottom: calc(100% - 16px);
+  left: 20px;
+  z-index: 30;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  list-style: none;
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.suggestion.active {
+  background: var(--sidebar-active-bg);
+  color: #ffffff;
+}
+
+.suggestion-glyph {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.suggestion-glyph img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.suggestion-label {
+  flex: none;
+  max-width: 60%;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion-detail {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion.active .suggestion-detail {
+  color: rgb(255 255 255 / 0.8);
 }
 
 .box {
@@ -32,9 +99,32 @@ textarea:focus {
 .bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  padding: 4px 6px 6px 12px;
+  padding: 4px 6px 6px;
+}
+
+.bar .hint {
+  flex: 1;
+  min-width: 0;
+}
+
+.tool {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tool:hover,
+.tool[aria-expanded='true'] {
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
 .send {
@@ -58,6 +148,11 @@ textarea:focus {
 @media (max-width: 767px) {
   :host {
     padding: 0 12px 12px;
+  }
+
+  .suggestions {
+    right: 12px;
+    left: 12px;
   }
 
   .keys {

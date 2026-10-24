@@ -1,0 +1,140 @@
+<section class="page" aria-labelledby="emoji-title">
+  <a class="btn btn-ghost btn-sm back" routerLink="/"
+    ><app-icon name="back" [size]="16" />{{ t('common.back') }}</a
+  >
+  <h1 id="emoji-title">{{ t('emoji.title') }}</h1>
+  <p class="muted intro">{{ t('emoji.intro') }}</p>
+
+  <form class="add" (submit)="$event.preventDefault(); save()">
+    <h2>{{ t('emoji.add') }}</h2>
+
+    <div class="pick">
+      <div class="preview" [class.filled]="image()">
+        @if (image(); as image) {
+          <img [src]="image.dataUrl" [alt]="t('emoji.preview')" />
+        } @else {
+          <app-icon name="smile" [size]="28" />
+        }
+      </div>
+      <div class="pick-text">
+        <label class="btn btn-sm file-button">
+          <input
+            type="file"
+            class="visually-hidden"
+            [accept]="accept"
+            [disabled]="preparing() || full()"
+            (change)="onFile($any($event.target))"
+          />
+          {{ image() ? t('emoji.changeImage') : t('emoji.chooseImage') }}
+        </label>
+        <p class="hint">{{ t('emoji.imageHint', { size: sizePx }) }}</p>
+        @if (imageError(); as error) {
+          <p class="hint hint-error" role="alert">{{ t(error) }}</p>
+        } @else if (image()?.animated) {
+          <p class="hint">{{ t('emoji.animatedKept') }}</p>
+        } @else if (image()?.animationDropped) {
+          <p class="hint">{{ t('emoji.animationDropped') }}</p>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="emoji-name">{{ t('emoji.name') }}</label>
+      <div class="name-box">
+        <span aria-hidden="true">:</span>
+        <input
+          id="emoji-name"
+          class="name-input"
+          autocomplete="off"
+          spellcheck="false"
+          [attr.maxlength]="nameMax"
+          [value]="name()"
+          (input)="onName($any($event.target).value)"
+        />
+        <span aria-hidden="true">:</span>
+      </div>
+      @if (nameProblem(); as problem) {
+        <p class="hint hint-error" role="alert">{{ t(problem, { name: name() }) }}</p>
+      } @else {
+        <p class="hint">{{ t('emoji.nameHint', { max: nameMax }) }}</p>
+      }
+    </div>
+
+    @if (image(); as image) {
+      <p class="sample">
+        <span class="muted">{{ t('emoji.sample') }}</span>
+        <img class="sample-inline" [src]="image.dataUrl" alt="" />
+        <img class="sample-jumbo" [src]="image.dataUrl" alt="" />
+      </p>
+    }
+
+    @if (full()) {
+      <p class="alert alert-info">{{ t('emoji.limitReached', { max }) }}</p>
+    }
+    @if (saveError(); as error) {
+      <p class="alert alert-error" role="alert">{{ t(error) }}</p>
+    }
+    @if (added(); as added) {
+      <p class="alert alert-info" role="status">{{ t('emoji.added', { name: added }) }}</p>
+    }
+
+    <button type="submit" class="btn btn-primary" [disabled]="!canSave()">
+      {{ saving() ? t('emoji.saving') : t('emoji.save') }}
+    </button>
+  </form>
+
+  <div class="list-header">
+    <h2>
+      {{ t('emoji.listTitle') }}
+      @if (catalog(); as catalog) {
+        <span class="count">{{ t('emoji.count', { count: catalog.length, max }) }}</span>
+      }
+    </h2>
+    <input
+      type="search"
+      class="input filter"
+      [placeholder]="t('emoji.filter')"
+      [attr.aria-label]="t('emoji.filter')"
+      [value]="filter()"
+      (input)="filter.set($any($event.target).value)"
+    />
+  </div>
+
+  @if (isAdmin()) {
+    <p class="alert alert-info">{{ t('emoji.adminNote') }}</p>
+  }
+  @if (listError(); as error) {
+    <p class="alert alert-error" role="alert">{{ t(error) }}</p>
+  }
+
+  @if (catalog() === undefined && !listError()) {
+    <p class="muted" role="status">{{ t('common.loading') }}</p>
+  } @else {
+    <ul class="list">
+      @for (emoji of shown(); track emoji.name) {
+        <li class="row">
+          <img class="row-image" [src]="emoji.image" [alt]="':' + emoji.name + ':'" />
+          <span class="row-text">
+            <code class="row-name">:{{ emoji.name }}:</code>
+            <span class="hint">{{ addedBy(emoji) }}</span>
+          </span>
+          @if (canDelete(emoji)) {
+            <button
+              type="button"
+              class="icon-btn"
+              [attr.aria-label]="t('emoji.deleteNamed', { name: emoji.name })"
+              [attr.title]="t('emoji.deleteNamed', { name: emoji.name })"
+              (click)="remove(emoji)"
+            >
+              <app-icon name="trash" [size]="16" />
+            </button>
+          }
+        </li>
+      } @empty {
+        <li class="muted empty">
+          {{ filter().trim() ? t('emoji.noMatch') : t('emoji.empty') }}
+        </li>
+      }
+    </ul>
+  }
+</section>

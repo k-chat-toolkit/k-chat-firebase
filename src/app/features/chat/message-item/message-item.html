@@ -59,30 +59,95 @@
     <app-message-text class="text" [text]="item.text" [editedAt]="item.editedAt" />
   }
 
+  @if (!item.deleted && reactions().length > 0) {
+    <div class="reactions">
+      @for (group of reactions(); track group.key) {
+        <button
+          type="button"
+          class="reaction"
+          [class.mine]="group.mine"
+          [attr.aria-pressed]="group.mine"
+          [attr.aria-label]="t('reactions.chip', { emoji: group.key, count: group.uids.length })"
+          [attr.title]="reactionTitle(group)"
+          [disabled]="!canReact()"
+          (click)="react(group.key)"
+        >
+          <app-emoji-glyph [key]="group.key" [size]="16" />
+          <span class="count">{{ group.uids.length }}</span>
+        </button>
+      }
+      @if (canReact()) {
+        <button
+          #addReaction
+          type="button"
+          class="reaction add"
+          aria-haspopup="dialog"
+          [attr.aria-expanded]="pickerAnchor() === addReaction"
+          [attr.aria-label]="t('reactions.add')"
+          [attr.title]="t('reactions.add')"
+          (click)="togglePicker(addReaction)"
+        >
+          <app-icon name="reaction" [size]="16" />
+        </button>
+      }
+    </div>
+  }
+
   @if (error(); as error) {
     <p class="hint hint-error" role="alert">{{ t(error) }}</p>
   }
 </div>
 
-@if (canChange() && !editing()) {
+@if (pickerAnchor(); as anchor) {
+  <app-emoji-picker [anchor]="anchor" (picked)="onPicked($event)" (closed)="closePicker()" />
+}
+
+@if ((canReact() || canChange()) && !editing()) {
   <div class="toolbar">
-    <button
-      type="button"
-      class="icon-btn"
-      [attr.aria-label]="t('chat.edit')"
-      [attr.title]="t('chat.edit')"
-      (click)="startEdit()"
-    >
-      <app-icon name="edit" [size]="16" />
-    </button>
-    <button
-      type="button"
-      class="icon-btn"
-      [attr.aria-label]="t('chat.delete')"
-      [attr.title]="t('chat.delete')"
-      (click)="remove()"
-    >
-      <app-icon name="trash" [size]="16" />
-    </button>
+    @if (canReact()) {
+      @for (key of quickReactions(); track key) {
+        <button
+          type="button"
+          class="icon-btn"
+          [attr.aria-label]="t('reactions.react', { emoji: key })"
+          [attr.title]="t('reactions.react', { emoji: key })"
+          (click)="react(key)"
+        >
+          <app-emoji-glyph [key]="key" [size]="18" />
+        </button>
+      }
+      <button
+        #reactButton
+        type="button"
+        class="icon-btn"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="pickerAnchor() === reactButton"
+        [attr.aria-label]="t('reactions.add')"
+        [attr.title]="t('reactions.add')"
+        (click)="togglePicker(reactButton)"
+      >
+        <app-icon name="reaction" [size]="16" />
+      </button>
+    }
+    @if (canChange()) {
+      <button
+        type="button"
+        class="icon-btn"
+        [attr.aria-label]="t('chat.edit')"
+        [attr.title]="t('chat.edit')"
+        (click)="startEdit()"
+      >
+        <app-icon name="edit" [size]="16" />
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        [attr.aria-label]="t('chat.delete')"
+        [attr.title]="t('chat.delete')"
+        (click)="remove()"
+      >
+        <app-icon name="trash" [size]="16" />
+      </button>
+    }
   </div>
 }

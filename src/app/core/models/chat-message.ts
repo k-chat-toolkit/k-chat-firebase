@@ -9,6 +9,8 @@ export interface ChatMessage {
   readonly createdAt: Timestamp;
   readonly editedAt: Timestamp | null;
   readonly deleted: boolean;
+  /** Each person's reactions, by uid: Unicode emoji, or ":name:" for custom ones. */
+  readonly reactions: Readonly<Record<string, readonly string[]>>;
   /** Written locally, not yet confirmed by the server. */
   readonly pending: boolean;
 }
@@ -25,8 +27,20 @@ export function messageFromSnapshot(snapshot: DocumentSnapshot): ChatMessage | n
     createdAt: createdAt instanceof Timestamp ? createdAt : Timestamp.now(),
     editedAt: editedAt instanceof Timestamp ? editedAt : null,
     deleted: data['deleted'] === true,
+    reactions: reactionsFrom(data['reactions']),
     pending: snapshot.metadata.hasPendingWrites,
   };
+}
+
+function reactionsFrom(value: unknown): Record<string, readonly string[]> {
+  const reactions: Record<string, readonly string[]> = {};
+  if (!value || typeof value !== 'object') return reactions;
+  for (const [uid, keys] of Object.entries(value)) {
+    if (!Array.isArray(keys)) continue;
+    const valid = keys.filter((key): key is string => typeof key === 'string');
+    if (valid.length > 0) reactions[uid] = valid;
+  }
+  return reactions;
 }
 
 /** Oldest first; ties (same millisecond) fall back to the id so the order is stable. */

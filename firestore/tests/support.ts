@@ -88,6 +88,14 @@ export function messageData(senderId: string, text = 'Hello') {
   return { senderId, text, createdAt: SEEDED_AT, editedAt: null, deleted: false };
 }
 
+/** A 1×1 PNG, the smallest valid custom emoji image. */
+export const EMOJI_IMAGE =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+export function emojiData(createdBy: string) {
+  return { image: EMOJI_IMAGE, createdBy, createdAt: SEEDED_AT };
+}
+
 /** A string of `length` Vietnamese letters: several UTF-8 bytes, one character each. */
 export function vietnameseText(length: number): string {
   return 'ệ'.repeat(length);

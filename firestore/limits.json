@@ -5,6 +5,10 @@
   "roomMaxMembers": 100,
   "roomListLimit": 100,
   "messagePageSize": 30,
+  "messageReactionsPerUser": 10,
   "inviteCodeLength": 8,
-  "inviteCodeAlphabet": "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  "inviteCodeAlphabet": "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
+  "emojiNameMaxLength": 32,
+  "emojiImageMaxLength": 24000,
+  "customEmojiMax": 200
 }

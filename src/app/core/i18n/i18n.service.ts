@@ -65,6 +65,9 @@ export class I18nService {
   private readonly dateTimeFormat = computed(
     () => new Intl.DateTimeFormat(this.locale(), { dateStyle: 'medium', timeStyle: 'short' }),
   );
+  private readonly listFormat = computed(
+    () => new Intl.ListFormat(this.locale(), { type: 'conjunction' }),
+  );
 
   constructor() {
     effect(() => {
@@ -109,6 +112,11 @@ export class I18nService {
   /** "Oct 24, 2026, 9:41 AM", for tooltips. */
   formatDateTime(date: Date): string {
     return this.dateTimeFormat().format(date);
+  }
+
+  /** "An, Bình, and Chi" or "An, Bình và Chi", by locale. */
+  formatList(items: readonly string[]): string {
+    return this.listFormat().format(items);
   }
 }
 

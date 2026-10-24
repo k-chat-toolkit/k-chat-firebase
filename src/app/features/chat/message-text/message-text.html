@@ -12,6 +12,8 @@
         <!-- Each piece sits in its own element: with pre-wrap, loose template whitespace would show. -->
         @if (inline.kind === 'code') {
           <code class="inline-code">{{ inline.text }}</code>
+        } @else if (inline.kind === 'emoji' && emojiImage(inline.name); as image) {
+          <img class="custom-emoji" [src]="image" [alt]="inline.text" [attr.title]="inline.text" />
         } @else if (inline.kind === 'link') {
           <a
             [href]="inline.href"
