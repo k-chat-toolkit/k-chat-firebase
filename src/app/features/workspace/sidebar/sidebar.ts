@@ -9,6 +9,7 @@ import { directPartnerId, type DirectRoom, type Room } from '@core/models/room';
 import { Avatar } from '@shared/ui/avatar/avatar';
 import { Icon } from '@shared/ui/icon/icon';
 import { LanguageSwitcher } from '@shared/ui/language-switcher/language-switcher';
+import { decodeMentions, mentionsUser } from '@shared/utils/mentions';
 import { singleLine } from '@shared/utils/text';
 
 /** Rooms and direct messages, Slack style. Everything here comes from one Firestore listener. */
@@ -38,15 +39,30 @@ export class Sidebar {
     return this.profiles.profile(this.partnerId(room))()?.displayName ?? '…';
   }
 
+  /** An unread last message that mentions you: the room shows "@" instead of a dot. */
+  protected mentionsMe(room: Room): boolean {
+    const last = room.lastMessage;
+    return (
+      !!last &&
+      !last.deleted &&
+      this.readMarkers.isUnread(room) &&
+      mentionsUser(last.text, this.uid())
+    );
+  }
+
   /** "You: on my way", "An: on my way", or "No messages yet". */
   protected preview(room: Room): string {
     const last = room.lastMessage;
     if (!last) return this.t('preview.empty');
     if (last.deleted) return this.t('preview.deleted');
-    const text = singleLine(last.text);
+    const text = singleLine(decodeMentions(last.text, (uid) => this.nameOf(uid)));
     if (last.senderId === this.uid()) return this.t('preview.mine', { text });
     if (room.type === 'direct') return text;
-    const name = this.profiles.profile(last.senderId)()?.displayName ?? '…';
-    return this.t('preview.theirs', { name, text });
+    return this.t('preview.theirs', { name: this.nameOf(last.senderId), text });
+  }
+
+  private nameOf(uid: string): string {
+    const profile = this.profiles.profile(uid)();
+    return profile === undefined ? '…' : (profile?.displayName ?? this.t('chat.unknownUser'));
   }
 }

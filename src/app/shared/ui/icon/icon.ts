@@ -24,6 +24,7 @@ const ICONS = {
   reaction:
     'M20.5 13A8.5 8.5 0 1 1 11 3.55M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5v.5M15 9.5v.5M19 2.5v6M16 5.5h6',
   search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',
+  reply: 'M10 8l-5 5 5 5M5 13h9a5 5 0 0 1 5 5v1',
 } as const;
 
 export type IconName = keyof typeof ICONS;

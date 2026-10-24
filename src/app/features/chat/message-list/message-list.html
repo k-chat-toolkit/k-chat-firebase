@@ -43,7 +43,15 @@
         <span>{{ row.label }}</span>
       </div>
     } @else {
-      <app-message-item [message]="row.message" [room]="room()" [compact]="row.compact" />
+      <app-message-item
+        [message]="row.message"
+        [room]="room()"
+        [feed]="feedState"
+        [compact]="row.compact"
+        [highlighted]="row.message.id === flashedId()"
+        (replyRequested)="reply.emit($event)"
+        (jumpRequested)="jumpTo($event)"
+      />
     }
   }
 </div>

@@ -27,7 +27,10 @@
             <span class="item-name">{{ room.name }}</span>
             <span class="item-preview">{{ preview(room) }}</span>
           </span>
-          @if (readMarkers.isUnread(room)) {
+          @if (mentionsMe(room)) {
+            <span class="mention-badge" aria-hidden="true">@</span>
+            <span class="visually-hidden">{{ t('sidebar.mentioned') }}</span>
+          } @else if (readMarkers.isUnread(room)) {
             <span class="dot"
               ><span class="visually-hidden">{{ t('sidebar.unread') }}</span></span
             >
@@ -80,7 +83,10 @@
             <span class="item-name">{{ partnerName(room) }}</span>
             <span class="item-preview">{{ preview(room) }}</span>
           </span>
-          @if (readMarkers.isUnread(room)) {
+          @if (mentionsMe(room)) {
+            <span class="mention-badge" aria-hidden="true">@</span>
+            <span class="visually-hidden">{{ t('sidebar.mentioned') }}</span>
+          } @else if (readMarkers.isUnread(room)) {
             <span class="dot"
               ><span class="visually-hidden">{{ t('sidebar.unread') }}</span></span
             >

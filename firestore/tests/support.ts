@@ -85,7 +85,7 @@ export function inviteData(roomId: string, createdBy: string) {
 }
 
 export function messageData(senderId: string, text = 'Hello') {
-  return { senderId, text, createdAt: SEEDED_AT, editedAt: null, deleted: false };
+  return { senderId, text, createdAt: SEEDED_AT, editedAt: null, deleted: false, replyTo: null };
 }
 
 /** A 1×1 PNG, the smallest valid custom emoji image. */

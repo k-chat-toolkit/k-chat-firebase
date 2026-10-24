@@ -35,6 +35,10 @@
   --shadow: 0 4px 12px rgb(0 0 0 / 0.12);
   --overlay: rgb(0 0 0 / 0.4);
   --radius: 8px;
+  --mention-bg: rgb(29 155 209 / 0.1);
+  --mention-me-bg: rgb(242 199 68 / 0.4);
+  --mentioned-row-bg: rgb(242 199 68 / 0.1);
+  --mentioned-row-border: #f2c744;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -54,6 +58,9 @@
     --info-bg: #15283a;
     --shadow: 0 4px 12px rgb(0 0 0 / 0.5);
     --overlay: rgb(0 0 0 / 0.6);
+    --mention-bg: rgb(29 155 209 / 0.18);
+    --mention-me-bg: rgb(242 199 68 / 0.3);
+    --mentioned-row-bg: rgb(242 199 68 / 0.07);
   }
 }
 

@@ -426,13 +426,27 @@ service cloud.firestore {
         // Pages are capped, so one query can never read a whole history.
         allow list: if isRoomMember() && request.query.limit <= messagePageSize();
 
+        // A reply names the message it answers, which must be in the same room;
+        // its sender is copied so a reply to you can be marked without a read.
+        function isReplyTarget(reply) {
+          return reply == null
+            || (reply is map
+              && hasExactly(reply, ['id', 'senderId'])
+              && reply.id is string
+              && reply.id != messageId
+              && exists(messagePath(reply.id))
+              && get(messagePath(reply.id)).data.senderId == reply.senderId);
+        }
+
         allow create: if isRoomMember()
-          && hasExactly(request.resource.data, ['senderId', 'text', 'createdAt', 'editedAt', 'deleted'])
+          && hasExactly(request.resource.data,
+            ['senderId', 'text', 'createdAt', 'editedAt', 'deleted', 'replyTo'])
           && request.resource.data.senderId == request.auth.uid
           && isMessageText(request.resource.data.text)
           && request.resource.data.createdAt == request.time
           && request.resource.data.editedAt == null
-          && request.resource.data.deleted == false;
+          && request.resource.data.deleted == false
+          && isReplyTarget(request.resource.data.replyTo);
 
         // `reactions` maps each uid to that person's reactions. Anyone in the
         // room may react, but only by changing the entry under their own uid.

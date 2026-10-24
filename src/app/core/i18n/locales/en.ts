@@ -83,6 +83,7 @@ export const en = {
   'sidebar.noDirects': 'Open a member of a room to message them.',
   'sidebar.profile': 'Profile and settings',
   'sidebar.unread': 'Unread messages',
+  'sidebar.mentioned': 'Unread message that mentions you',
   'sidebar.navigation': 'Rooms and direct messages',
 
   'preview.empty': 'No messages yet',
@@ -127,6 +128,12 @@ export const en = {
   'chat.yesterday': 'Yesterday',
   'chat.unknownUser': 'Unknown user',
   'chat.messages': 'Messages',
+  'chat.reply': 'Reply',
+  'chat.replyingTo': 'Replying to {name}',
+  'chat.cancelReply': 'Cancel reply',
+  'chat.replyJump': 'Show the original message',
+  'chat.replyDeleted': 'The original message was deleted.',
+  'chat.replyMissing': 'The original message is no longer available.',
 
   'composer.emoji': 'Emoji',
   'composer.suggestions': 'Suggestions',

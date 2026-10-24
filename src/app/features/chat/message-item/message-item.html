@@ -22,6 +22,31 @@
     </div>
   }
 
+  @if (item.replyTo && !item.deleted) {
+    @let original = quoted();
+    <button
+      type="button"
+      class="quote"
+      [attr.aria-label]="t('chat.replyJump')"
+      [attr.title]="t('chat.replyJump')"
+      (click)="jumpRequested.emit(item.replyTo.id)"
+    >
+      <app-icon name="reply" [size]="14" />
+      @if (original === undefined) {
+        <span class="quote-text">…</span>
+      } @else if (original === null) {
+        <span class="quote-text muted">{{ t('chat.replyMissing') }}</span>
+      } @else {
+        <span class="quote-name">{{ nameOf(original.senderId) }}</span>
+        @if (original.deleted) {
+          <span class="quote-text muted">{{ t('chat.replyDeleted') }}</span>
+        } @else {
+          <span class="quote-text">{{ snippet(original.text) }}</span>
+        }
+      }
+    </button>
+  }
+
   @if (editing()) {
     <div class="editor">
       <textarea
@@ -127,6 +152,15 @@
         (click)="togglePicker(reactButton)"
       >
         <app-icon name="reaction" [size]="16" />
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        [attr.aria-label]="t('chat.reply')"
+        [attr.title]="t('chat.reply')"
+        (click)="replyRequested.emit(item)"
+      >
+        <app-icon name="reply" [size]="16" />
       </button>
     }
     @if (canChange()) {

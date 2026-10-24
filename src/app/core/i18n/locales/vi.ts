@@ -81,6 +81,7 @@ export const vi: Translations = {
   'sidebar.noDirects': 'Mở một thành viên trong phòng để nhắn riêng.',
   'sidebar.profile': 'Hồ sơ và cài đặt',
   'sidebar.unread': 'Có tin chưa đọc',
+  'sidebar.mentioned': 'Tin chưa đọc nhắc đến bạn',
   'sidebar.navigation': 'Phòng và tin nhắn riêng',
 
   'preview.empty': 'Chưa có tin nhắn',
@@ -125,6 +126,12 @@ export const vi: Translations = {
   'chat.yesterday': 'Hôm qua',
   'chat.unknownUser': 'Người dùng không xác định',
   'chat.messages': 'Tin nhắn',
+  'chat.reply': 'Trả lời',
+  'chat.replyingTo': 'Đang trả lời {name}',
+  'chat.cancelReply': 'Hủy trả lời',
+  'chat.replyJump': 'Xem tin nhắn gốc',
+  'chat.replyDeleted': 'Tin nhắn gốc đã bị xóa.',
+  'chat.replyMissing': 'Không còn tin nhắn gốc.',
 
   'composer.emoji': 'Emoji',
   'composer.suggestions': 'Gợi ý',

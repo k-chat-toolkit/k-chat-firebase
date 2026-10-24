@@ -4,8 +4,11 @@ import {
   Component,
   computed,
   ElementRef,
+  DestroyRef,
   inject,
   input,
+  output,
+  signal,
   viewChild,
 } from '@angular/core';
 import type { MessageFeed } from '@core/data/message-feed';
@@ -20,6 +23,9 @@ const GROUPING_WINDOW_MS = 5 * 60_000;
 
 /** How close to an edge (in pixels) counts as "at the bottom" or "at the top". */
 const EDGE_PX = 120;
+
+/** How long a message stays highlighted after a jump to it. */
+const FLASH_MS = 1600;
 
 type Row =
   | { readonly kind: 'day'; readonly key: string; readonly label: string }
@@ -45,12 +51,18 @@ export class MessageList {
   readonly feed = input.required<MessageFeed>();
   readonly displayName = input('');
 
+  /** A message's reply button was pressed. */
+  readonly reply = output<ChatMessage>();
+
   private readonly scroller = viewChild.required<ElementRef<HTMLElement>>('scroller');
 
   /** Follow new messages while the reader is at the bottom; leave them alone when scrolled up. */
   private stickToBottom = true;
   private previousFirstKey: string | undefined;
   private previousHeight = 0;
+  private flashTimer: ReturnType<typeof setTimeout> | undefined;
+
+  protected readonly flashedId = signal<string | null>(null);
 
   protected readonly rows = computed<Row[]>(() => {
     const rows: Row[] = [];
@@ -75,6 +87,7 @@ export class MessageList {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.flashTimer));
     afterRenderEffect(() => {
       const rows = this.rows();
       const element = this.scroller().nativeElement;
@@ -94,6 +107,22 @@ export class MessageList {
     this.stickToBottom = true;
     const element = this.scroller().nativeElement;
     element.scrollTop = element.scrollHeight;
+  }
+
+  /**
+   * Scrolls to the original of a reply and flashes it. A message older than the
+   * loaded pages is not fetched for this: its quote already shows its text.
+   */
+  protected jumpTo(id: string): void {
+    const target = this.scroller().nativeElement.querySelector(
+      `[data-message-id="${CSS.escape(id)}"]`,
+    );
+    if (!target) return;
+    this.stickToBottom = false;
+    target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    clearTimeout(this.flashTimer);
+    this.flashedId.set(id);
+    this.flashTimer = setTimeout(() => this.flashedId.set(null), FLASH_MS);
   }
 
   protected onScroll(): void {

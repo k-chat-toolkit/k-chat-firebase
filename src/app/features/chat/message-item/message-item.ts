@@ -7,10 +7,13 @@ import {
   ElementRef,
   inject,
   input,
+  output,
   signal,
   viewChild,
 } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { CustomEmojiService } from '@core/data/custom-emoji.service';
+import type { MessageFeed } from '@core/data/message-feed';
 import { MessageService } from '@core/data/message.service';
 import { ProfileService } from '@core/data/profile.service';
 import { RecentEmojiService } from '@core/data/recent-emoji.service';
@@ -19,11 +22,14 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/locales/en';
 import { LIMITS } from '@core/limits';
 import type { ChatMessage } from '@core/models/chat-message';
+import { customEmojiName } from '@core/models/custom-emoji';
 import type { Room } from '@core/models/room';
 import { Avatar } from '@shared/ui/avatar/avatar';
 import { ConfirmService } from '@shared/ui/confirm-dialog/confirm.service';
 import { Icon } from '@shared/ui/icon/icon';
+import { decodeMentions, encodeMentions, mentionsUser } from '@shared/utils/mentions';
 import { groupReactions, type ReactionGroup } from '@shared/utils/reactions';
+import { singleLine } from '@shared/utils/text';
 import { EmojiGlyph } from '../emoji-glyph/emoji-glyph';
 import { EmojiPicker } from '../emoji-picker/emoji-picker';
 import { MessageText } from '../message-text/message-text';
@@ -32,8 +38,8 @@ import { MessageText } from '../message-text/message-text';
 const REACTION_NAMES_SHOWN = 10;
 
 /**
- * One message: avatar, name and time (unless compact), text, reactions, and a
- * toolbar to react, plus edit and delete for your own.
+ * One message: avatar, name and time (unless compact), the message it replies to,
+ * text, reactions, and a toolbar to react and reply, plus edit and delete for your own.
  */
 @Component({
   selector: 'app-message-item',
@@ -44,6 +50,9 @@ const REACTION_NAMES_SHOWN = 10;
     '[class.editing]': 'editing()',
     '[class.pending]': 'message().pending',
     '[class.active]': 'active() || pickerAnchor() !== null',
+    '[class.mentioned]': 'mentioned()',
+    '[class.highlighted]': 'highlighted()',
+    '[attr.data-message-id]': 'message().id',
     '(click)': 'onTap($event)',
   },
   templateUrl: './message-item.html',
@@ -55,6 +64,7 @@ export class MessageItem {
   private readonly profiles = inject(ProfileService);
   private readonly confirm = inject(ConfirmService);
   private readonly recentEmoji = inject(RecentEmojiService);
+  private readonly customEmoji = inject(CustomEmojiService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly document = inject(DOCUMENT);
   protected readonly i18n = inject(I18nService);
@@ -62,8 +72,16 @@ export class MessageItem {
 
   readonly message = input.required<ChatMessage>();
   readonly room = input.required<Room>();
+  /** The open room's messages, where the original of a reply usually is. */
+  readonly feed = input.required<MessageFeed>();
   /** Same sender as the message above, within a few minutes: no avatar or name. */
   readonly compact = input(false);
+  /** Flashed after a jump from a reply. */
+  readonly highlighted = input(false);
+
+  readonly replyRequested = output<ChatMessage>();
+  /** The id of the original message, when its quote is clicked. */
+  readonly jumpRequested = output<string>();
 
   private readonly editor = viewChild<ElementRef<HTMLTextAreaElement>>('editor');
 
@@ -75,7 +93,12 @@ export class MessageItem {
   protected readonly active = signal(false);
   /** The button the emoji picker opened from, while it is open. */
   protected readonly pickerAnchor = signal<HTMLElement | null>(null);
-  protected readonly quickReactions = this.recentEmoji.quickReactions;
+  protected readonly quickReactions = computed(() =>
+    this.recentEmoji.quickReactions((key) => {
+      const name = customEmojiName(key);
+      return name === null || this.customEmoji.emoji(name)() !== null;
+    }),
+  );
 
   protected readonly senderName = computed(() => {
     const profile = this.profiles.profile(this.message().senderId)();
@@ -91,6 +114,21 @@ export class MessageItem {
   protected readonly reactions = computed(() =>
     groupReactions(this.message().reactions, this.auth.user()?.uid ?? ''),
   );
+
+  /** Mentions you, or replies to a message of yours: highlighted, as in Slack. */
+  protected readonly mentioned = computed(() => {
+    const uid = this.auth.user()?.uid ?? '';
+    const message = this.message();
+    if (message.deleted || message.senderId === uid) return false;
+    return mentionsUser(message.text, uid) || message.replyTo?.senderId === uid;
+  });
+
+  /** The original of a reply: undefined while loading, null if it is gone. */
+  protected readonly quoted = computed(() => {
+    const reply = this.message().replyTo;
+    if (!reply) return null;
+    return this.feed().find(reply.id) ?? this.messages.message(this.room().id, reply.id)();
+  });
   protected readonly time = computed(() => this.i18n.formatTime(this.message().createdAt.toDate()));
   protected readonly fullTime = computed(() =>
     this.i18n.formatDateTime(this.message().createdAt.toDate()),
@@ -153,6 +191,16 @@ export class MessageItem {
     if (!alreadyMine) void this.react(key);
   }
 
+  protected nameOf(uid: string): string {
+    const profile = this.profiles.profile(uid)();
+    return profile === undefined ? '…' : (profile?.displayName ?? this.t('chat.unknownUser'));
+  }
+
+  /** One line of the original, with names in place of mention tokens. */
+  protected snippet(text: string): string {
+    return singleLine(decodeMentions(text, (uid) => this.profiles.cachedName(uid)));
+  }
+
   /** "An, Bình and you reacted with 🎉". */
   protected reactionTitle(group: ReactionGroup): string {
     const uid = this.auth.user()?.uid;
@@ -169,7 +217,7 @@ export class MessageItem {
   }
 
   protected startEdit(): void {
-    this.draft.set(this.message().text);
+    this.draft.set(decodeMentions(this.message().text, (uid) => this.profiles.cachedName(uid)));
     this.error.set(null);
     this.editing.set(true);
   }
@@ -189,8 +237,12 @@ export class MessageItem {
   }
 
   protected async saveEdit(): Promise<void> {
-    const text = this.draft().trim();
     if (!this.draftValid()) return;
+    const members = this.room().memberIds.map((uid) => ({
+      uid,
+      name: this.profiles.cachedName(uid) ?? '',
+    }));
+    const text = encodeMentions(this.draft().trim(), members);
     if (text === this.message().text) {
       this.editing.set(false);
       return;

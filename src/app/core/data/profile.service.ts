@@ -87,6 +87,11 @@ export class ProfileService {
     return entry;
   }
 
+  /** A name already fetched this session, without fetching it: null when unknown. */
+  cachedName(uid: string): string | null {
+    return this.others.get(uid)?.()?.displayName ?? null;
+  }
+
   /** Creates your profile on first use, renames it afterwards. */
   async saveMyDisplayName(displayName: string): Promise<void> {
     const ref = doc(this.db, 'users', this.auth.requireUid());

@@ -69,6 +69,7 @@ function newMessage(senderId: string, text = 'On my way', overrides: Record<stri
     createdAt: serverTimestamp(),
     editedAt: null,
     deleted: false,
+    replyTo: null,
     ...overrides,
   };
 }
@@ -165,6 +166,34 @@ describe('messages: send', () => {
         lastActivityAt: serverTimestamp(),
       }),
     );
+  });
+});
+
+describe('messages: replies', () => {
+  it('allows replying to a message in the room, naming its sender', async () => {
+    const db = dbAs(env, ALICE);
+    const reply = newMessage(ALICE, 'Sure', { replyTo: { id: 'm1', senderId: BOB } });
+    await assertSucceeds(send(db, 'm2', reply, previewOf('m2', ALICE, 'Sure')));
+  });
+
+  it('denies a reply to a missing message, or with the wrong sender', async () => {
+    const db = dbAs(env, ALICE);
+    for (const replyTo of [
+      { id: 'nope', senderId: BOB },
+      { id: 'm1', senderId: ALICE },
+      { id: 'm2', senderId: ALICE },
+    ]) {
+      await assertFails(setDoc(messageRef(db, 'm2'), newMessage(ALICE, 'Hi', { replyTo })));
+    }
+  });
+
+  it('denies an extra field in the reply, or a message without replyTo', async () => {
+    const db = dbAs(env, ALICE);
+    const replyTo = { id: 'm1', senderId: BOB, text: 'Hello' };
+    await assertFails(setDoc(messageRef(db, 'm2'), newMessage(ALICE, 'Hi', { replyTo })));
+    const withoutReply: Record<string, unknown> = newMessage(ALICE, 'Hi');
+    delete withoutReply['replyTo'];
+    await assertFails(setDoc(messageRef(db, 'm3'), withoutReply));
   });
 });
 

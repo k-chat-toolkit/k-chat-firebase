@@ -19,7 +19,9 @@
         (mouseenter)="activeIndex.set(index)"
       >
         <span class="suggestion-glyph" aria-hidden="true">
-          @if (suggestion.image; as image) {
+          @if (suggestion.uid; as uid) {
+            <app-avatar [uid]="uid" [name]="suggestion.label" [size]="20" />
+          } @else if (suggestion.image; as image) {
             <img [src]="image" alt="" />
           } @else {
             {{ suggestion.emoji }}
@@ -33,6 +35,24 @@
 }
 
 <form class="box" (submit)="$event.preventDefault(); submit()">
+  @if (replyTo(); as reply) {
+    <div class="reply-bar">
+      <app-icon name="reply" [size]="14" />
+      <span class="reply-text">
+        <span class="reply-label">{{ t('chat.replyingTo', { name: reply.name }) }}</span>
+        <span class="reply-snippet">{{ reply.text }}</span>
+      </span>
+      <button
+        type="button"
+        class="tool"
+        [attr.aria-label]="t('chat.cancelReply')"
+        [attr.title]="t('chat.cancelReply')"
+        (click)="cancelReply.emit()"
+      >
+        <app-icon name="close" [size]="14" />
+      </button>
+    </div>
+  }
   <textarea
     #textarea
     rows="1"

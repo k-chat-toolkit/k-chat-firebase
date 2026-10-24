@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal, type Signal, type WritableSignal } from '@angular/core';
 import {
   arrayRemove,
   arrayUnion,
@@ -6,6 +6,7 @@ import {
   deleteField,
   doc,
   FieldPath,
+  getDoc,
   serverTimestamp,
   updateDoc,
   writeBatch,
@@ -14,7 +15,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { AppError } from '@core/errors/app-error';
 import { FIRESTORE } from '@core/firebase/firebase.providers';
 import { LIMITS } from '@core/limits';
-import type { ChatMessage } from '@core/models/chat-message';
+import { messageFromSnapshot, type ChatMessage, type ReplyTarget } from '@core/models/chat-message';
 import type { Room } from '@core/models/room';
 import { MessageFeed } from './message-feed';
 
@@ -23,6 +24,7 @@ import { MessageFeed } from './message-feed';
 export class MessageService {
   private readonly db = inject(FIRESTORE);
   private readonly auth = inject(AuthService);
+  private readonly fetched = new Map<string, WritableSignal<ChatMessage | null | undefined>>();
 
   /** A feed for one room. The caller must `close()` it. */
   openFeed(roomId: string): MessageFeed {
@@ -30,10 +32,28 @@ export class MessageService {
   }
 
   /**
-   * Sends a message and refreshes the room's preview in one batch.
-   * Rules: messages `allow create` + rooms isNewMessageActivity().
+   * One message, fetched once per session: the original of a reply when it is not
+   * among the loaded pages. Undefined while loading, null if it is gone.
+   * Rules: messages `allow get`.
    */
-  async send(roomId: string, text: string): Promise<void> {
+  message(roomId: string, id: string): Signal<ChatMessage | null | undefined> {
+    const key = `${roomId}/${id}`;
+    const known = this.fetched.get(key);
+    if (known) return known;
+    const entry = signal<ChatMessage | null | undefined>(undefined);
+    this.fetched.set(key, entry);
+    getDoc(doc(this.db, 'rooms', roomId, 'messages', id)).then(
+      (snapshot) => entry.set(messageFromSnapshot(snapshot)),
+      () => entry.set(null),
+    );
+    return entry;
+  }
+
+  /**
+   * Sends a message, maybe as a reply, and refreshes the room's preview in one batch.
+   * Rules: messages `allow create` (with isReplyTarget()) + rooms isNewMessageActivity().
+   */
+  async send(roomId: string, text: string, replyTo: ReplyTarget | null = null): Promise<void> {
     const senderId = this.auth.requireUid();
     const messageRef = doc(collection(this.db, 'rooms', roomId, 'messages'));
     const batch = writeBatch(this.db);
@@ -43,6 +63,7 @@ export class MessageService {
       createdAt: serverTimestamp(),
       editedAt: null,
       deleted: false,
+      replyTo: replyTo && { id: replyTo.id, senderId: replyTo.senderId },
     });
     batch.update(doc(this.db, 'rooms', roomId), {
       lastMessage: {

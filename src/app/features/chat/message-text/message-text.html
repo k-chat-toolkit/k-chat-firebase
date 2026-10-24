@@ -14,6 +14,15 @@
           <code class="inline-code">{{ inline.text }}</code>
         } @else if (inline.kind === 'emoji' && emojiImage(inline.name); as image) {
           <img class="custom-emoji" [src]="image" [alt]="inline.text" [attr.title]="inline.text" />
+        } @else if (inline.kind === 'mention') {
+          <span
+            class="mention"
+            [class.mention-me]="isMe(inline.uid)"
+            [class.bold]="inline.style.bold"
+            [class.italic]="inline.style.italic"
+            [class.strike]="inline.style.strike"
+            >@{{ mentionName(inline.uid) }}</span
+          >
         } @else if (inline.kind === 'link') {
           <a
             [href]="inline.href"
