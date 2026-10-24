@@ -1,0 +1,66 @@
+:host {
+  display: block;
+  padding: 0 20px 20px;
+}
+
+.box {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.box:focus-within {
+  border-color: var(--text-muted);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  max-height: 240px;
+  padding: 11px 12px 4px;
+  border: 0;
+  background: transparent;
+  resize: none;
+}
+
+textarea:focus {
+  outline: none;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px 6px 12px;
+}
+
+.send {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 28px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.send:disabled {
+  background: transparent;
+  color: var(--text-muted);
+  cursor: default;
+}
+
+@media (max-width: 767px) {
+  :host {
+    padding: 0 12px 12px;
+  }
+
+  .keys {
+    display: none;
+  }
+}

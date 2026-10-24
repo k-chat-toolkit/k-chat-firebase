@@ -1,0 +1,31 @@
+<form class="box" (submit)="$event.preventDefault(); submit()">
+  <textarea
+    #textarea
+    rows="1"
+    [placeholder]="placeholder()"
+    [attr.aria-label]="placeholder()"
+    [value]="text()"
+    (input)="onInput($any($event.target).value)"
+    (keydown)="onKeydown($event)"
+  ></textarea>
+  <div class="bar">
+    <span class="hint" [class.hint-error]="left() < 0" aria-live="polite">
+      @if (left() < 0) {
+        {{ t('common.charactersOver', { count: -left() }) }}
+      } @else if (showCounter()) {
+        {{ t('common.charactersLeft', { count: left() }) }}
+      } @else {
+        <span class="keys">{{ t('chat.composerHint') }}</span>
+      }
+    </span>
+    <button
+      type="submit"
+      class="send"
+      [disabled]="!canSend()"
+      [attr.aria-label]="t('chat.send')"
+      [attr.title]="t('chat.send')"
+    >
+      <app-icon name="send" [size]="16" />
+    </button>
+  </div>
+</form>
