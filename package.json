@@ -1,7 +1,7 @@
 {
   "name": "k-chat",
   "version": "0.1.0",
-  "description": "Chat app starter kit on Firebase's free Spark plan: Angular, Authentication, Cloud Firestore and Hosting.",
+  "description": "A slimmed-down chat app you host yourself on Firebase's free Spark plan: Angular, Authentication, Cloud Firestore and Hosting.",
   "private": true,
   "engines": {
     "node": "^24.15.0 || >=26.0.0"

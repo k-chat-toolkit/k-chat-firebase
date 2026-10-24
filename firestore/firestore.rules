@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Security rules for K-Chat Starter. There is no server: these rules are the only
+// Security rules for K-Chat Lite. There is no server: these rules are the only
 // authorization layer, so every write path is pinned here.
 //
 // The house rules (see RULES.md, "Security rules"):
