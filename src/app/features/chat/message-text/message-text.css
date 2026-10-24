@@ -1,0 +1,71 @@
+:host {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+:host(.jumbo) {
+  font-size: 32px;
+  line-height: 1.25;
+}
+
+.line {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.line + .line,
+.code-block + .line,
+.line + .code-block,
+.code-block + .code-block {
+  margin-top: 4px;
+}
+
+.quote {
+  padding-left: 12px;
+  border-left: 4px solid var(--border);
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.strike {
+  text-decoration: line-through;
+}
+
+.inline-code,
+.code-block {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.inline-code {
+  padding: 1px 3px;
+  border-radius: 3px;
+  color: var(--danger);
+}
+
+.code-block {
+  margin: 0;
+  padding: 8px;
+  overflow-x: auto;
+  border-radius: 4px;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+.edited {
+  margin-left: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+:host(.jumbo) .edited {
+  vertical-align: middle;
+}

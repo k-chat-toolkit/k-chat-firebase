@@ -21,13 +21,13 @@ import type { Room } from '@core/models/room';
 import { Avatar } from '@shared/ui/avatar/avatar';
 import { ConfirmService } from '@shared/ui/confirm-dialog/confirm.service';
 import { Icon } from '@shared/ui/icon/icon';
-import { linkify } from '@shared/utils/text';
+import { MessageText } from '../message-text/message-text';
 
 /** One message: avatar, name and time (unless compact), text, and edit/delete for your own. */
 @Component({
   selector: 'app-message-item',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Avatar, Icon],
+  imports: [Avatar, Icon, MessageText],
   host: {
     '[class.compact]': 'compact()',
     '[class.editing]': 'editing()',
@@ -66,7 +66,6 @@ export class MessageItem {
   protected readonly canChange = computed(
     () => this.mine() && !this.message().deleted && !this.message().pending,
   );
-  protected readonly segments = computed(() => linkify(this.message().text));
   protected readonly time = computed(() => this.i18n.formatTime(this.message().createdAt.toDate()));
   protected readonly fullTime = computed(() =>
     this.i18n.formatDateTime(this.message().createdAt.toDate()),
