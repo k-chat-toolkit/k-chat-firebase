@@ -18,6 +18,54 @@
   background: var(--surface-hover);
 }
 
+:host(.mentioned) {
+  box-shadow: inset 3px 0 0 var(--mentioned-row-border);
+  background: var(--mentioned-row-bg);
+}
+
+:host(.highlighted) {
+  animation: flash 1.6s ease-out;
+}
+
+@keyframes flash {
+  from {
+    background: var(--mention-me-bg);
+  }
+}
+
+.quote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin: 2px 0 4px;
+  padding: 2px 8px 2px 6px;
+  border: 0;
+  border-left: 3px solid var(--border-strong);
+  border-radius: 0 4px 4px 0;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quote:hover {
+  color: var(--text);
+}
+
+.quote-name {
+  flex: none;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.quote-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 :host(.pending) .text {
   opacity: 0.6;
 }

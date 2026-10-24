@@ -1,5 +1,11 @@
 import { Timestamp, type DocumentSnapshot } from 'firebase/firestore';
 
+/** The message a reply answers: its id, and its sender so a reply to you shows without a read. */
+export interface ReplyTarget {
+  readonly id: string;
+  readonly senderId: string;
+}
+
 /** rooms/{roomId}/messages/{messageId}. */
 export interface ChatMessage {
   readonly id: string;
@@ -9,6 +15,7 @@ export interface ChatMessage {
   readonly createdAt: Timestamp;
   readonly editedAt: Timestamp | null;
   readonly deleted: boolean;
+  readonly replyTo: ReplyTarget | null;
   /** Each person's reactions, by uid: Unicode emoji, or ":name:" for custom ones. */
   readonly reactions: Readonly<Record<string, readonly string[]>>;
   /** Written locally, not yet confirmed by the server. */
@@ -27,9 +34,18 @@ export function messageFromSnapshot(snapshot: DocumentSnapshot): ChatMessage | n
     createdAt: createdAt instanceof Timestamp ? createdAt : Timestamp.now(),
     editedAt: editedAt instanceof Timestamp ? editedAt : null,
     deleted: data['deleted'] === true,
+    replyTo: replyTargetFrom(data['replyTo']),
     reactions: reactionsFrom(data['reactions']),
     pending: snapshot.metadata.hasPendingWrites,
   };
+}
+
+function replyTargetFrom(value: unknown): ReplyTarget | null {
+  if (!value || typeof value !== 'object') return null;
+  const data = value as Record<string, unknown>;
+  return typeof data['id'] === 'string' && typeof data['senderId'] === 'string'
+    ? { id: data['id'], senderId: data['senderId'] }
+    : null;
 }
 
 function reactionsFrom(value: unknown): Record<string, readonly string[]> {

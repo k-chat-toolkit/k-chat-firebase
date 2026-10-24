@@ -110,6 +110,19 @@ ul {
   background: var(--sidebar-text-strong);
 }
 
+.mention-badge {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .add-icon {
   display: grid;
   place-items: center;

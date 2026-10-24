@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import type { Timestamp } from 'firebase/firestore';
+import { AuthService } from '@core/auth/auth.service';
 import { CustomEmojiService } from '@core/data/custom-emoji.service';
+import { ProfileService } from '@core/data/profile.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import { formatMessage, isJumboEmoji } from '@shared/utils/message-format';
 
@@ -14,6 +16,8 @@ import { formatMessage, isJumboEmoji } from '@shared/utils/message-format';
 })
 export class MessageText {
   private readonly customEmoji = inject(CustomEmojiService);
+  private readonly profiles = inject(ProfileService);
+  private readonly auth = inject(AuthService);
   protected readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
 
@@ -24,6 +28,16 @@ export class MessageText {
   protected readonly jumbo = computed(() =>
     isJumboEmoji(this.text(), (name) => !!this.customEmoji.emoji(name)()),
   );
+
+  /** A mentioned person's current name: one profile read per person per session. */
+  protected mentionName(uid: string): string {
+    const profile = this.profiles.profile(uid)();
+    return profile === undefined ? '…' : (profile?.displayName ?? this.t('chat.unknownUser'));
+  }
+
+  protected isMe(uid: string): boolean {
+    return uid === this.auth.user()?.uid;
+  }
 
   /** The image of the custom emoji called `name`, or null to show the ":name:" text. */
   protected emojiImage(name: string): string | null {

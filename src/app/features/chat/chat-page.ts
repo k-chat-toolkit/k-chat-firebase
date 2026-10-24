@@ -24,10 +24,13 @@ import { RoomService } from '@core/data/room.service';
 import { errorMessageKey, isPermissionDenied } from '@core/errors/app-error';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/locales/en';
+import type { ChatMessage } from '@core/models/chat-message';
 import { directPartnerId, type Room } from '@core/models/room';
 import { Avatar } from '@shared/ui/avatar/avatar';
 import { Icon } from '@shared/ui/icon/icon';
-import { Composer } from './composer/composer';
+import { decodeMentions } from '@shared/utils/mentions';
+import { singleLine } from '@shared/utils/text';
+import { Composer, type ReplyPreview } from './composer/composer';
 import { MessageList } from './message-list/message-list';
 import { RoomDetails } from './room-details/room-details';
 
@@ -64,10 +67,22 @@ export class ChatPage {
   readonly details = input<string>();
 
   private readonly messageList = viewChild(MessageList);
+  private readonly composer = viewChild(Composer);
 
   protected readonly showDetails = signal(false);
   protected readonly sendError = signal<TranslationKey | null>(null);
   protected readonly feed = signal<MessageFeed | null>(null);
+  /** The message the next one answers, while replying. */
+  protected readonly replyingTo = signal<ChatMessage | null>(null);
+
+  protected readonly replyPreview = computed<ReplyPreview | null>(() => {
+    const message = this.replyingTo();
+    if (!message) return null;
+    const profile = this.profiles.profile(message.senderId)();
+    const name = profile === undefined ? '…' : (profile?.displayName ?? this.t('chat.unknownUser'));
+    const text = singleLine(decodeMentions(message.text, (uid) => this.profiles.cachedName(uid)));
+    return { name, text };
+  });
 
   /** The id to watch on its own when the room is not in the sidebar's list. */
   private readonly missingId = computed(() => {
@@ -126,6 +141,7 @@ export class ChatPage {
       const feed = this.messages.openFeed(this.roomId());
       this.feed.set(feed);
       this.sendError.set(null);
+      this.replyingTo.set(null);
       onCleanup(() => feed.close());
     });
 
@@ -153,11 +169,18 @@ export class ChatPage {
     this.showDetails.update((open) => !open);
   }
 
+  protected startReply(message: ChatMessage): void {
+    this.replyingTo.set(message);
+    this.composer()?.focus();
+  }
+
   protected async send(text: string): Promise<void> {
     this.sendError.set(null);
     this.messageList()?.scrollToBottom();
+    const replyTo = this.replyingTo();
+    this.replyingTo.set(null);
     try {
-      await this.messages.send(this.roomId(), text);
+      await this.messages.send(this.roomId(), text, replyTo);
     } catch (error) {
       this.sendError.set(errorMessageKey(error));
     }

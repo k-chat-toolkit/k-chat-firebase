@@ -7,7 +7,7 @@
 .suggestions {
   position: absolute;
   right: 20px;
-  bottom: calc(100% - 16px);
+  bottom: calc(100% + 4px);
   left: 20px;
   z-index: 30;
   margin: 0;
@@ -79,6 +79,37 @@
 .box:focus-within {
   border-color: var(--text-muted);
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
+}
+
+.reply-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  border-radius: var(--radius) var(--radius) 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.reply-text {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
+
+.reply-label {
+  flex: none;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.reply-snippet {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 textarea {

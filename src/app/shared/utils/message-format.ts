@@ -24,6 +24,13 @@ export type Inline =
       readonly name: string;
       readonly style: InlineStyle;
     }
+  /** "<@uid>": the UI shows the person's current name. */
+  | {
+      readonly kind: 'mention';
+      readonly text: string;
+      readonly uid: string;
+      readonly style: InlineStyle;
+    }
   | { readonly kind: 'code'; readonly text: string };
 
 export type Block =
@@ -37,6 +44,7 @@ const FENCE = /```([^]*?)```/g;
 const QUOTE_LINE = /^>[ \t]?/;
 const INLINE_CODE = /`([^`\n]+)`/g;
 const CUSTOM_EMOJI = new RegExp(`:([a-z0-9_-]{1,${LIMITS.emojiNameMaxLength}}):`, 'g');
+const TOKEN = new RegExp(`<@([A-Za-z0-9]{1,128})>|${CUSTOM_EMOJI.source}`, 'g');
 
 /**
  * Slack's rule for `*bold*`, `_italic_` and `~strike~`: the opening marker follows the
@@ -49,7 +57,7 @@ const STYLE_SPAN = /(^|[^\p{L}\p{N}])([*_~])(?=\S)([^\n]*?\S)\2(?![\p{L}\p{N}])/
 const STYLE_KEY = { '*': 'bold', _: 'italic', '~': 'strike' } as const;
 
 /**
- * Links and ":name:" tokens are swapped for private-use characters while styles are
+ * Links, "<@uid>" and ":name:" tokens are swapped for private-use characters while styles are
  * parsed, so a `_` inside a URL or a name is never read as a marker, and a style can
  * still wrap a whole link.
  */
@@ -123,7 +131,8 @@ function parseInline(text: string): Inline[] {
 
 type Atom =
   | Omit<Extract<Inline, { kind: 'link' }>, 'style'>
-  | Omit<Extract<Inline, { kind: 'emoji' }>, 'style'>;
+  | Omit<Extract<Inline, { kind: 'emoji' }>, 'style'>
+  | Omit<Extract<Inline, { kind: 'mention' }>, 'style'>;
 
 function styled(text: string): Inline[] {
   if (text === '') return [];
@@ -137,8 +146,10 @@ function styled(text: string): Inline[] {
     masked +=
       piece.kind === 'link'
         ? mask(piece)
-        : piece.text.replace(CUSTOM_EMOJI, (token, name: string) =>
-            mask({ kind: 'emoji', text: token, name }),
+        : piece.text.replace(TOKEN, (token, uid: string | undefined, name: string) =>
+            mask(
+              uid ? { kind: 'mention', text: token, uid } : { kind: 'emoji', text: token, name },
+            ),
           );
   }
   return applyStyles(masked, PLAIN, atoms);
@@ -158,7 +169,7 @@ function applyStyles(text: string, style: InlineStyle, atoms: Atom[]): Inline[] 
   return out;
 }
 
-/** Puts the links and ":name:" tokens back in place of their placeholders. */
+/** Puts the links and tokens back in place of their placeholders. */
 function unmask(text: string, style: InlineStyle, atoms: Atom[]): Inline[] {
   const out: Inline[] = [];
   let plain = '';

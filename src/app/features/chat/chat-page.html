@@ -27,12 +27,23 @@
   <div class="chat-body">
     <div class="chat-main">
       @if (feed(); as feed) {
-        <app-message-list [room]="room" [feed]="feed" [displayName]="displayName()" />
+        <app-message-list
+          [room]="room"
+          [feed]="feed"
+          [displayName]="displayName()"
+          (reply)="startReply($event)"
+        />
       }
       @if (sendError(); as error) {
         <p class="alert alert-error send-error" role="alert">{{ t(error) }}</p>
       }
-      <app-composer [placeholder]="placeholder()" (send)="send($event)" />
+      <app-composer
+        [placeholder]="placeholder()"
+        [memberIds]="room.memberIds"
+        [replyTo]="replyPreview()"
+        (send)="send($event)"
+        (cancelReply)="replyingTo.set(null)"
+      />
     </div>
     @if (showDetails()) {
       <app-room-details id="room-details" [room]="room" (closed)="showDetails.set(false)" />

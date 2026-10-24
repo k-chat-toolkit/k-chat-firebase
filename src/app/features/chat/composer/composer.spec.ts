@@ -1,15 +1,23 @@
 import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { AuthService } from '@core/auth/auth.service';
 import { CustomEmojiService } from '@core/data/custom-emoji.service';
+import { ProfileService } from '@core/data/profile.service';
 import { LIMITS } from '@core/limits';
 import { loadUnicodeEmoji } from '@shared/emoji/unicode-emoji';
 import { Composer } from './composer';
 
-/** No Firestore in unit tests: the composer sees an app without custom emoji. */
+/** No Firestore in unit tests: no custom emoji, and one other member, Bình. */
 const noCustomEmoji = {
   catalog: signal([]).asReadonly(),
   loadCatalog: () => Promise.resolve(),
 };
+const names: Record<string, string> = { u2: 'Bình' };
+const profiles = {
+  profile: (uid: string) => signal(names[uid] ? { uid, displayName: names[uid] } : null),
+  cachedName: (uid: string) => names[uid] ?? null,
+};
+const auth = { user: signal({ uid: 'me' }) };
 
 describe('Composer', () => {
   let fixture: ComponentFixture<Composer>;
@@ -18,10 +26,15 @@ describe('Composer', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [{ provide: CustomEmojiService, useValue: noCustomEmoji }],
+      providers: [
+        { provide: CustomEmojiService, useValue: noCustomEmoji },
+        { provide: ProfileService, useValue: profiles },
+        { provide: AuthService, useValue: auth },
+      ],
     });
     fixture = TestBed.createComponent(Composer);
     fixture.componentRef.setInput('placeholder', 'Message #riders');
+    fixture.componentRef.setInput('memberIds', ['me', 'u2']);
     sent = [];
     fixture.componentInstance.send.subscribe((text) => sent.push(text));
     await fixture.whenStable();
@@ -85,5 +98,24 @@ describe('Composer', () => {
     await type('at 10:30');
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('[role=option]')).toBeNull();
+  });
+
+  it('suggests members after "@" and sends the mention as a token', async () => {
+    await type('cc @bi');
+    const options: HTMLElement[] = [...fixture.nativeElement.querySelectorAll('[role=option]')];
+    expect(options.map((option) => option.querySelector('.suggestion-label')?.textContent)).toEqual(
+      ['Bình'],
+    );
+    press({});
+    expect(textarea.value).toBe('cc @Bình ');
+    await type(textarea.value + 'ơi');
+    press({});
+    expect(sent).toEqual(['cc <@u2> ơi']);
+  });
+
+  it('also sends a typed, unpicked name of a known member as a mention', async () => {
+    await type('@Bình xem nhé');
+    press({});
+    expect(sent).toEqual(['<@u2> xem nhé']);
   });
 });

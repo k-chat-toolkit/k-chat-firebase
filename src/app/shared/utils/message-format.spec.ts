@@ -83,6 +83,18 @@ describe('formatMessage', () => {
     });
   });
 
+  it('reads <@uid> tokens as mentions', () => {
+    expect(formatMessage('hi <@abc123>, _<@x9>_')[0]).toEqual({
+      kind: 'paragraph',
+      inlines: [
+        text('hi '),
+        { kind: 'mention', text: '<@abc123>', uid: 'abc123', style: PLAIN },
+        text(', '),
+        { kind: 'mention', text: '<@x9>', uid: 'x9', style: ITALIC },
+      ],
+    });
+  });
+
   it('leaves times and uppercase names as text', () => {
     expect(formatMessage('at 10:30 :Party:')).toEqual([
       { kind: 'paragraph', inlines: [text('at 10:30 :Party:')] },

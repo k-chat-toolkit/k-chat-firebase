@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 const STORAGE_KEY = 'k-chat.recent-emoji';
 const MAX_RECENT = 27;
@@ -17,12 +17,15 @@ export class RecentEmojiService {
   /** Keys as stored in messages: Unicode emoji, or ":name:" for custom ones. */
   readonly recent = this.state.asReadonly();
 
-  /** Three emoji for the message toolbar, as in Slack. */
-  readonly quickReactions = computed(() =>
-    [...this.state(), ...DEFAULT_QUICK_REACTIONS]
-      .filter((key, index, all) => all.indexOf(key) === index)
-      .slice(0, 3),
-  );
+  /**
+   * Three emoji for the message toolbar, as in Slack: the latest you used, topped
+   * up with defaults. `isAvailable` drops a custom emoji deleted since.
+   */
+  quickReactions(isAvailable: (key: string) => boolean): string[] {
+    return [...this.state(), ...DEFAULT_QUICK_REACTIONS]
+      .filter((key, index, all) => all.indexOf(key) === index && isAvailable(key))
+      .slice(0, 3);
+  }
 
   use(key: string): void {
     const next = [key, ...this.state().filter((item) => item !== key)].slice(0, MAX_RECENT);

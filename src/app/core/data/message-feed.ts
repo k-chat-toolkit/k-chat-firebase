@@ -86,6 +86,11 @@ export class MessageFeed {
     );
   }
 
+  /** A loaded message by id, live while it is in the newest page. */
+  find(id: string): ChatMessage | undefined {
+    return this.byId().get(id);
+  }
+
   /** Fetches the page before the oldest loaded message. */
   async loadOlder(): Promise<void> {
     if (!this.oldest || this.loadingOlderState() || !this.hasOlderState()) return;
