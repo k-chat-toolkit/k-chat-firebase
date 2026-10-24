@@ -1,0 +1,40 @@
+# Your own Firebase config: written by `npm run setup`, templates are committed as *.example*
+/src/environments/environment.firebase.ts
+/.firebaserc
+
+# Local Emulator Suite data and logs
+/.emulator-data/
+*-debug.log
+firebase-debug.*.log
+/.firebase/
+
+# Local notes, not part of the kit
+/CLAUDE.md
+/.claude/
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+
+# Node
+node_modules/
+npm-debug.log
+
+# IDEs and editors
+.idea/
+*.sublime-workspace
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+/coverage
+__screenshots__/
+
+# System files
+.DS_Store
+Thumbs.db
