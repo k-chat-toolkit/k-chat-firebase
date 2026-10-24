@@ -1,0 +1,41 @@
+@for (block of blocks(); track $index; let lastBlock = $last) {
+  @if (block.kind === 'code') {
+    <pre class="code-block"><code>{{ block.text }}</code></pre>
+    @if (lastBlock && editedAt(); as editedAt) {
+      <span class="edited" [attr.title]="i18n.formatDateTime(editedAt.toDate())">{{
+        t('chat.edited')
+      }}</span>
+    }
+  } @else {
+    <p class="line" [class.quote]="block.kind === 'quote'">
+      @for (inline of block.inlines; track $index) {
+        <!-- Each piece sits in its own element: with pre-wrap, loose template whitespace would show. -->
+        @if (inline.kind === 'code') {
+          <code class="inline-code">{{ inline.text }}</code>
+        } @else if (inline.kind === 'link') {
+          <a
+            [href]="inline.href"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            [class.bold]="inline.style.bold"
+            [class.italic]="inline.style.italic"
+            [class.strike]="inline.style.strike"
+            >{{ inline.text }}</a
+          >
+        } @else {
+          <span
+            [class.bold]="inline.style.bold"
+            [class.italic]="inline.style.italic"
+            [class.strike]="inline.style.strike"
+            >{{ inline.text }}</span
+          >
+        }
+      }
+      @if (lastBlock && editedAt(); as editedAt) {
+        <span class="edited" [attr.title]="i18n.formatDateTime(editedAt.toDate())">{{
+          t('chat.edited')
+        }}</span>
+      }
+    </p>
+  }
+}

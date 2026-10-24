@@ -4,8 +4,8 @@ export type TextSegment =
   | { readonly kind: 'link'; readonly text: string; readonly href: string };
 
 const URL_PATTERN = /\bhttps?:\/\/[^\s<>"']+/gi;
-// Characters that usually end a sentence rather than a URL.
-const TRAILING_PUNCTUATION = /[.,;:!?)\]]+$/;
+// Characters that usually end a sentence, or close a *bold* or _italic_ span, rather than a URL.
+const TRAILING_PUNCTUATION = /[.,;:!?)\]*_~]+$/;
 
 /**
  * Splits text into plain parts and http(s) links. Templates render the parts

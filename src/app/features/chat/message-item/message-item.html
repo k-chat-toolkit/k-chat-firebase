@@ -56,23 +56,7 @@
   } @else if (item.deleted) {
     <p class="text deleted">{{ t('chat.deleted') }}</p>
   } @else {
-    <p class="text">
-      @for (segment of segments(); track $index) {
-        <!-- Each piece sits in its own element: with pre-wrap, loose template whitespace would show. -->
-        @if (segment.kind === 'link') {
-          <a [href]="segment.href" target="_blank" rel="noopener noreferrer nofollow">{{
-            segment.text
-          }}</a>
-        } @else {
-          <span>{{ segment.text }}</span>
-        }
-      }
-      @if (item.editedAt) {
-        <span class="edited" [attr.title]="i18n.formatDateTime(item.editedAt.toDate())">{{
-          t('chat.edited')
-        }}</span>
-      }
-    </p>
+    <app-message-text class="text" [text]="item.text" [editedAt]="item.editedAt" />
   }
 
   @if (error(); as error) {

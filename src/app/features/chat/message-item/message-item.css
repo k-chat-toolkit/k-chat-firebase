@@ -57,21 +57,11 @@ time {
 .text {
   margin: 0;
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
-}
-
-.deleted,
-.edited {
-  color: var(--text-muted);
 }
 
 .deleted {
+  color: var(--text-muted);
   font-style: italic;
-}
-
-.edited {
-  margin-left: 4px;
-  font-size: 13px;
 }
 
 .toolbar {
