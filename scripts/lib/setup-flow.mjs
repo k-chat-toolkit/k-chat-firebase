@@ -178,3 +178,34 @@ export async function runSetup({ cli, prompt, files, log, options }) {
 
   return { projectId, appId };
 }
+
+/**
+ * What is left after setup, with links into the project's console. Admins are
+ * listed in Firestore's `admins` collection, which the rules let no client write,
+ * so the console is the only place to add one.
+ */
+export function renderNextSteps(projectId, { deployed = true } = {}) {
+  const base = `https://console.firebase.google.com/project/${projectId}`;
+  const status = deployed
+    ? 'The security rules and indexes are live.'
+    : 'The rules and indexes are not deployed yet (--skip-deploy): npm run deploy sends them.';
+  return `
+Done. ${status} What is left:
+
+  1. Turn on the sign-in methods, if you have not yet: Email/Password and Google.
+     ${base}/authentication/providers
+
+  2. Run the app on your project, then publish it:
+     npm start          http://localhost:4300
+     npm run deploy     prints your Hosting URL, e.g. https://${projectId}.web.app
+
+  3. Make yourself an admin (an admin can delete anyone's custom emoji):
+     a. Sign in to the app once, so your account exists.
+     b. Copy your User UID from the users list:
+        ${base}/authentication/users
+     c. In Firestore, start the collection "admins" (or open it) and add a document
+        whose Document ID is that UID, with one field such as email = your address:
+        ${base}/firestore/databases/-default-/data
+     Only the console can add or remove admins; the app has no way to.
+`;
+}

@@ -11,7 +11,7 @@ import { parseArgs } from 'node:util';
 import { firebaseJson, runFirebase } from './lib/firebase-cli.mjs';
 import { ENVIRONMENT_FILE, FIREBASERC } from './lib/paths.mjs';
 import { createPrompt, NeedsAnswerError } from './lib/prompt.mjs';
-import { runSetup, SetupError } from './lib/setup-flow.mjs';
+import { renderNextSteps, runSetup, SetupError } from './lib/setup-flow.mjs';
 
 const USAGE = `Usage: npm run setup [-- options]
 
@@ -60,16 +60,7 @@ try {
       skipDeploy: options['skip-deploy'],
     },
   });
-  console.log(`
-Done. Two things left:
-
-  1. Turn on the sign-in methods, if you have not yet: Email/Password and Google.
-     https://console.firebase.google.com/project/${projectId}/authentication/providers
-
-  2. Run the app on your project, then publish it:
-     npm start          http://localhost:4300
-     npm run deploy     prints your Hosting URL, e.g. https://${projectId}.web.app
-`);
+  console.log(renderNextSteps(projectId, { deployed: !options['skip-deploy'] }));
 } catch (error) {
   if (error instanceof SetupError || error instanceof NeedsAnswerError) {
     console.error(`\nSetup stopped: ${error.message}`);

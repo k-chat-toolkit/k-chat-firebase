@@ -84,7 +84,8 @@ Do these four steps once.
    - lets you pick the project and its web app;
    - writes your config into `src/environments/environment.firebase.ts` and `.firebaserc`;
    - creates the Firestore database if the project has none (it asks for a location, which cannot be changed later; pick the one closest to your users);
-   - deploys the security rules and indexes.
+   - deploys the security rules and indexes: rooms, invites, messages, reactions, custom emoji and the admin list all work from the first sign-in;
+   - ends with the steps left, with links into your project's console, including how to make yourself an admin.
 
    Run `npm run setup -- --help` for flags. You can use them to skip the questions, for example in CI.
 
@@ -100,6 +101,7 @@ npm run deploy   # build + Hosting + rules + indexes
 - **First deploy:** the CLI may ask to create the default Hosting site. Answer yes.
 - **Right after the first deploy:** the composite index for the room list can take a few minutes to build. Until it is ready the room list stays empty, and the browser console says the index is building.
 - **Another domain:** if you serve the app from a domain other than `*.web.app` / `*.firebaseapp.com`, add it under _Authentication → Settings → Authorized domains_ so Google sign-in works there.
+- **Make yourself an admin:** sign in to the app once, then follow [Admins](#customizing) under _Customizing_. It takes a minute in the Firebase console.
 
 ## Commands
 
@@ -287,10 +289,15 @@ The app uses the plain Firebase JS SDK with Angular signals: no AngularFire, so 
   3. Add the dictionary to `TABLES`, plus a `locale.fr` key in every dictionary.
 - **Colors:** the design tokens are at the top of `src/styles.css`, light and dark.
 - **Limits:** edit `firestore/limits.json`, run `npm run limits`, then `npm run test:rules`. Redeploy the rules with `npm run deploy`.
-- **Admins:** an admin may delete anyone's custom emoji. To make someone an admin:
-  1. Copy their uid from _Authentication → Users_ in the Firebase console.
-  2. In _Firestore Database_, create the collection `admins` with a document whose id is that uid. Its fields do not matter.
-  3. Delete the document to take the role back. No client can write to `admins`.
+- **Admins:** an admin may delete anyone's custom emoji. The role is already in the rules that setup deploys; you only list who has it. The list is the Firestore collection `admins`, and the rules let no client write to it, so a user can never make themselves an admin: only the Firebase console can.
+  1. The person signs in to the app once, so their account exists.
+  2. In the Firebase console, open _Build → Authentication → Users_ and copy their **User UID** (the copy icon next to it). The email column tells you who is who.
+  3. Open _Build → Firestore Database → Data_. Choose _Start collection_ (the first time) with the collection ID `admins`, or open `admins` and choose _Add document_.
+  4. Paste the UID as the **Document ID**. Add one field so the list is readable, for example `email` (string) set to their address; the rules only look at the ID.
+  5. The person reloads the app. To take the role back, delete the document.
+
+  On the emulators (`npm run dev`), do the same in the Emulator UI at http://127.0.0.1:4000: the users are under _Authentication_, the data under _Firestore_.
+
 - **Emoji table:** after upgrading `emojibase-data`, run `npm run emoji-data` and commit the new `unicode-emoji.json`. Emoji newer than version 15 are left out, since many devices cannot draw them yet.
 
 ## Troubleshooting

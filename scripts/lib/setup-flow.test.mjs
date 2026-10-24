@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { projectIdFromEnvironment, projectIdFromFirebaserc } from './config-files.mjs';
 import { NeedsAnswerError } from './prompt.mjs';
-import { runSetup, SetupError } from './setup-flow.mjs';
+import { renderNextSteps, runSetup, SetupError } from './setup-flow.mjs';
 
 const SDK_CONFIG = {
   apiKey: 'AIzaFakeKey',
@@ -184,5 +184,30 @@ describe('runSetup', () => {
       options: { project: 'my-chat', skipDeploy: true },
     });
     assert.ok(!cli.ran.some((call) => call[1] === 'deploy'));
+  });
+});
+
+describe('renderNextSteps', () => {
+  it("links the project's sign-in providers, users list and Firestore data", () => {
+    const text = renderNextSteps('my-chat');
+    for (const path of [
+      'authentication/providers',
+      'authentication/users',
+      'firestore/databases/-default-/data',
+    ]) {
+      assert.ok(text.includes(`https://console.firebase.google.com/project/my-chat/${path}`), path);
+    }
+  });
+
+  it('does not claim the rules are live after --skip-deploy', () => {
+    assert.match(renderNextSteps('my-chat'), /rules and indexes are live/);
+    assert.match(renderNextSteps('my-chat', { deployed: false }), /not deployed yet/);
+  });
+
+  it('says how to make an admin, and that only the console can', () => {
+    const text = renderNextSteps('my-chat');
+    assert.match(text, /"admins"/);
+    assert.match(text, /Document ID is that UID/);
+    assert.match(text, /Only the console can add or remove admins/);
   });
 });
