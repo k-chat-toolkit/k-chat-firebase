@@ -1,0 +1,133 @@
+:host {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px 20px;
+}
+
+:host(.compact) {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+:host(:hover),
+:host(:focus-within),
+:host(.editing) {
+  background: var(--surface-hover);
+}
+
+:host(.pending) .text {
+  opacity: 0.6;
+}
+
+.gutter {
+  padding-top: 2px;
+}
+
+.gutter-time {
+  display: block;
+  visibility: hidden;
+  padding-top: 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+:host(:hover) .gutter-time {
+  visibility: visible;
+}
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sender {
+  font-weight: 900;
+}
+
+time {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.text {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.deleted,
+.edited {
+  color: var(--text-muted);
+}
+
+.deleted {
+  font-style: italic;
+}
+
+.edited {
+  margin-left: 4px;
+  font-size: 13px;
+}
+
+.toolbar {
+  position: absolute;
+  top: -14px;
+  right: 20px;
+  display: none;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+:host(:hover) .toolbar,
+:host(:focus-within) .toolbar {
+  display: flex;
+}
+
+.editor {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.editor textarea {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  resize: vertical;
+}
+
+.editor textarea:focus {
+  outline: none;
+}
+
+.editor-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
+.editor-bar .hint {
+  flex: 1;
+}
+
+@media (hover: none) {
+  .toolbar {
+    position: static;
+    display: flex;
+    grid-column: 2;
+    justify-self: start;
+    box-shadow: none;
+  }
+}

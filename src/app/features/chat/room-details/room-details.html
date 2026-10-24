@@ -1,0 +1,120 @@
+<header class="panel-header">
+  <h2>{{ t('details.title') }}</h2>
+  <button
+    type="button"
+    class="icon-btn"
+    [attr.aria-label]="t('common.close')"
+    (click)="closed.emit()"
+  >
+    <app-icon name="close" />
+  </button>
+</header>
+
+<div class="panel-body">
+  @if (error(); as error) {
+    <p class="alert alert-error" role="alert">{{ t(error) }}</p>
+  }
+  @if (deletedCount() !== null) {
+    <p class="alert alert-info" role="status">
+      {{ t('details.deleting', { count: deletedCount() ?? 0 }) }}
+    </p>
+  }
+
+  @if (group(); as group) {
+    @if (isOwner()) {
+      <form class="section" (submit)="$event.preventDefault(); rename()">
+        <label class="label" for="room-name">{{ t('details.rename') }}</label>
+        <div class="row">
+          <input id="room-name" class="input" [formControl]="name" [maxlength]="maxLength" />
+          <button type="submit" class="btn" [disabled]="name.invalid || name.pristine || busy()">
+            {{ t('common.save') }}
+          </button>
+        </div>
+      </form>
+    }
+
+    <section class="section">
+      <h3 class="label">{{ t('details.invite') }}</h3>
+      <p class="muted small">{{ t('details.inviteBody') }}</p>
+      <p class="code">{{ group.inviteCode }}</p>
+      <div class="actions">
+        <button type="button" class="btn btn-sm" (click)="copy('link')">
+          <app-icon name="link" [size]="14" />{{
+            copied() === 'link' ? t('common.copied') : t('details.copyLink')
+          }}
+        </button>
+        <button type="button" class="btn btn-sm" (click)="copy('code')">
+          <app-icon name="copy" [size]="14" />{{
+            copied() === 'code' ? t('common.copied') : t('details.copyCode')
+          }}
+        </button>
+        @if (isOwner()) {
+          <button type="button" class="btn btn-sm" [disabled]="busy()" (click)="resetCode()">
+            <app-icon name="refresh" [size]="14" />{{ t('details.resetCode') }}
+          </button>
+        }
+      </div>
+    </section>
+  } @else {
+    <p class="section muted">{{ t('details.directBody') }}</p>
+  }
+
+  <section class="section">
+    <h3 class="label">{{ t('details.members') }} · {{ room().memberIds.length }}</h3>
+    <ul class="members">
+      @for (memberId of members(); track memberId) {
+        <li class="member">
+          <app-avatar [uid]="memberId" [name]="nameOf(memberId)" [size]="32" />
+          <span class="member-name">
+            {{ nameOf(memberId) }}
+            @if (memberId === uid()) {
+              <span class="muted">({{ t('details.you') }})</span>
+            }
+            @if (memberId === group()?.ownerId) {
+              <span class="badge">{{ t('details.owner') }}</span>
+            }
+          </span>
+          @if (memberId !== uid()) {
+            <a class="btn btn-sm btn-ghost" [routerLink]="['/dm', memberId]">{{
+              t('details.message')
+            }}</a>
+            @if (isOwner()) {
+              <button
+                type="button"
+                class="btn btn-sm btn-ghost danger"
+                [disabled]="busy()"
+                (click)="removeMember(memberId)"
+              >
+                {{ t('details.remove') }}
+              </button>
+            }
+          }
+        </li>
+      }
+    </ul>
+  </section>
+
+  @if (group()) {
+    <section class="section">
+      @if (isOwner()) {
+        <button
+          type="button"
+          class="btn btn-sm danger-outline"
+          [disabled]="busy()"
+          (click)="deleteRoom()"
+        >
+          <app-icon name="trash" [size]="14" />{{ t('details.deleteRoom') }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="btn btn-sm danger-outline"
+          [disabled]="busy()"
+          (click)="leave()"
+        >
+          <app-icon name="signOut" [size]="14" />{{ t('details.leave') }}
+        </button>
+      }
+    </section>
+  }
+</div>

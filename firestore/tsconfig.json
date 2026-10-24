@@ -1,0 +1,10 @@
+/* Type-checks the security rules suite (run by `npm run lint`). */
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "resolveJsonModule": true
+  },
+  "include": ["vitest.config.mts", "tests/**/*.ts"]
+}

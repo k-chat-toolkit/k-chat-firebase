@@ -1,0 +1,48 @@
+@if (room(); as room) {
+  <header class="chat-header">
+    <a class="icon-btn back" routerLink="/" [attr.aria-label]="t('common.back')">
+      <app-icon name="back" />
+    </a>
+    <h1 class="room-title">
+      @if (room.type === 'group') {
+        <app-icon name="hash" [size]="18" />
+      } @else if (partnerId(); as partner) {
+        <app-avatar [uid]="partner" [name]="displayName()" [size]="24" />
+      }
+      <span class="room-name">{{ displayName() }}</span>
+    </h1>
+    <button
+      type="button"
+      class="members"
+      [attr.aria-expanded]="showDetails()"
+      aria-controls="room-details"
+      [attr.title]="t('chat.details')"
+      (click)="toggleDetails()"
+    >
+      <app-icon name="users" [size]="16" />
+      <span>{{ memberLabel() }}</span>
+    </button>
+  </header>
+
+  <div class="chat-body">
+    <div class="chat-main">
+      @if (feed(); as feed) {
+        <app-message-list [room]="room" [feed]="feed" [displayName]="displayName()" />
+      }
+      @if (sendError(); as error) {
+        <p class="alert alert-error send-error" role="alert">{{ t(error) }}</p>
+      }
+      <app-composer [placeholder]="placeholder()" (send)="send($event)" />
+    </div>
+    @if (showDetails()) {
+      <app-room-details id="room-details" [room]="room" (closed)="showDetails.set(false)" />
+    }
+  </div>
+} @else if (gone()) {
+  <section class="page">
+    <p class="alert alert-error" role="alert">{{ t('errors.roomGone') }}</p>
+    <a class="btn" routerLink="/">{{ t('common.back') }}</a>
+  </section>
+} @else {
+  <p class="page muted" role="status">{{ t('common.loading') }}</p>
+}

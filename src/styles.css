@@ -1,0 +1,300 @@
+/*
+ * Global styles: design tokens, base elements and the few shared classes
+ * (buttons, fields, cards, alerts). Components keep their own layout styles.
+ * The look follows Slack's classic theme: an aubergine sidebar and a light
+ * content pane, with a dark variant from the system setting.
+ */
+
+:root {
+  color-scheme: light dark;
+  --font:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+
+  --sidebar-bg: #3f0e40;
+  --sidebar-bg-hover: #350d36;
+  --sidebar-border: rgb(255 255 255 / 0.13);
+  --sidebar-text: rgb(255 255 255 / 0.7);
+  --sidebar-text-strong: #ffffff;
+  --sidebar-active-bg: #1164a3;
+
+  --surface: #ffffff;
+  --surface-muted: #f8f8f8;
+  --surface-hover: #f8f8f8;
+  --text: #1d1c1d;
+  --text-muted: #616061;
+  --border: #dddddd;
+  --border-strong: #8d8d8d;
+  --accent: #007a5a;
+  --accent-hover: #148567;
+  --link: #1264a3;
+  --danger: #e01e5a;
+  --danger-bg: #fdf0f4;
+  --info-bg: #eef6fc;
+  --focus-ring: 0 0 0 4px rgb(29 155 209 / 0.3);
+  --shadow: 0 4px 12px rgb(0 0 0 / 0.12);
+  --overlay: rgb(0 0 0 / 0.4);
+  --radius: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sidebar-bg: #19171d;
+    --sidebar-bg-hover: #27242c;
+
+    --surface: #1a1d21;
+    --surface-muted: #222529;
+    --surface-hover: #222529;
+    --text: #d1d2d3;
+    --text-muted: #ababad;
+    --border: #35373b;
+    --border-strong: #6b6b6e;
+    --link: #1d9bd1;
+    --danger-bg: #3a1a24;
+    --info-bg: #15283a;
+    --shadow: 0 4px 12px rgb(0 0 0 / 0.5);
+    --overlay: rgb(0 0 0 / 0.6);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.46668;
+  color: var(--text);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.25;
+}
+
+a {
+  color: var(--link);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+/* Buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger);
+  filter: brightness(1.08);
+}
+
+.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-sm {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+/* Forms */
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.field label {
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.input:focus {
+  border-color: var(--link);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.input-code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.hint-error {
+  color: var(--danger);
+}
+
+/* Cards and pages */
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.card h1 {
+  margin-bottom: 8px;
+  font-size: 26px;
+}
+
+.centered {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px 16px;
+  background: var(--surface-muted);
+}
+
+.page {
+  max-width: 560px;
+  padding: 32px 24px;
+}
+
+.page h1 {
+  margin-bottom: 8px;
+  font-size: 22px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Alerts */
+
+.alert {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+.alert-error {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.alert-info {
+  background: var(--info-bg);
+}

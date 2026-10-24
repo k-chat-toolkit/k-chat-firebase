@@ -1,0 +1,104 @@
+@let item = message();
+<div class="gutter">
+  @if (compact()) {
+    <time
+      class="gutter-time"
+      [attr.datetime]="item.createdAt.toDate().toISOString()"
+      [attr.title]="fullTime()"
+      >{{ time() }}</time
+    >
+  } @else {
+    <app-avatar [uid]="item.senderId" [name]="senderName()" />
+  }
+</div>
+
+<div class="content">
+  @if (!compact()) {
+    <div class="meta">
+      <span class="sender">{{ senderName() }}</span>
+      <time [attr.datetime]="item.createdAt.toDate().toISOString()" [attr.title]="fullTime()">{{
+        time()
+      }}</time>
+    </div>
+  }
+
+  @if (editing()) {
+    <div class="editor">
+      <textarea
+        #editor
+        [value]="draft()"
+        (input)="draft.set($any($event.target).value)"
+        (keydown)="onEditorKeydown($event)"
+        rows="2"
+        [attr.aria-label]="t('chat.edit')"
+      ></textarea>
+      <div class="editor-bar">
+        <span class="hint" [class.hint-error]="draft().length > maxLength">
+          @if (draft().length > maxLength) {
+            {{ t('common.charactersOver', { count: draft().length - maxLength }) }}
+          } @else {
+            {{ t('chat.editHint') }}
+          }
+        </span>
+        <button type="button" class="btn btn-sm" (click)="cancelEdit()">
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-primary"
+          [disabled]="!draftValid()"
+          (click)="saveEdit()"
+        >
+          {{ t('common.save') }}
+        </button>
+      </div>
+    </div>
+  } @else if (item.deleted) {
+    <p class="text deleted">{{ t('chat.deleted') }}</p>
+  } @else {
+    <p class="text">
+      @for (segment of segments(); track $index) {
+        <!-- Each piece sits in its own element: with pre-wrap, loose template whitespace would show. -->
+        @if (segment.kind === 'link') {
+          <a [href]="segment.href" target="_blank" rel="noopener noreferrer nofollow">{{
+            segment.text
+          }}</a>
+        } @else {
+          <span>{{ segment.text }}</span>
+        }
+      }
+      @if (item.editedAt) {
+        <span class="edited" [attr.title]="i18n.formatDateTime(item.editedAt.toDate())">{{
+          t('chat.edited')
+        }}</span>
+      }
+    </p>
+  }
+
+  @if (error(); as error) {
+    <p class="hint hint-error" role="alert">{{ t(error) }}</p>
+  }
+</div>
+
+@if (canChange() && !editing()) {
+  <div class="toolbar">
+    <button
+      type="button"
+      class="icon-btn"
+      [attr.aria-label]="t('chat.edit')"
+      [attr.title]="t('chat.edit')"
+      (click)="startEdit()"
+    >
+      <app-icon name="edit" [size]="16" />
+    </button>
+    <button
+      type="button"
+      class="icon-btn"
+      [attr.aria-label]="t('chat.delete')"
+      [attr.title]="t('chat.delete')"
+      (click)="remove()"
+    >
+      <app-icon name="trash" [size]="16" />
+    </button>
+  </div>
+}

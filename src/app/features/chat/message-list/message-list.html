@@ -1,0 +1,49 @@
+<div
+  #scroller
+  class="scroller"
+  role="log"
+  aria-live="polite"
+  [attr.aria-label]="t('chat.messages')"
+  (scroll)="onScroll()"
+>
+  @let feedState = feed();
+  @if (feedState.hasOlder()) {
+    <div class="older">
+      <button
+        type="button"
+        class="btn btn-sm"
+        [disabled]="feedState.loadingOlder() || !feedState.ready()"
+        (click)="loadOlder()"
+      >
+        {{ feedState.loadingOlder() ? t('common.loading') : t('chat.loadOlder') }}
+      </button>
+    </div>
+  } @else if (feedState.ready()) {
+    <div class="beginning">
+      <span class="beginning-icon">
+        @if (room().type === 'group') {
+          <app-icon name="hash" [size]="28" />
+        } @else {
+          <app-icon name="message" [size]="28" />
+        }
+      </span>
+      <p>
+        @if (room().type === 'group') {
+          {{ t('chat.beginningGroup', { name: displayName() }) }}
+        } @else {
+          {{ t('chat.beginningDirect', { name: displayName() }) }}
+        }
+      </p>
+    </div>
+  }
+
+  @for (row of rows(); track row.key) {
+    @if (row.kind === 'day') {
+      <div class="day" role="separator">
+        <span>{{ row.label }}</span>
+      </div>
+    } @else {
+      <app-message-item [message]="row.message" [room]="room()" [compact]="row.compact" />
+    }
+  }
+</div>

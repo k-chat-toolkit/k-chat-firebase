@@ -1,0 +1,98 @@
+<header class="header">
+  <a routerLink="/" class="workspace-name">{{ t('app.name') }}</a>
+  <a
+    routerLink="/new"
+    class="header-action"
+    [attr.aria-label]="t('sidebar.createRoom')"
+    [attr.title]="t('sidebar.createRoom')"
+  >
+    <app-icon name="plus" />
+  </a>
+</header>
+
+<nav class="scroll" [attr.aria-label]="t('sidebar.navigation')">
+  <h2 class="section-title">{{ t('sidebar.rooms') }}</h2>
+  <ul>
+    @for (room of rooms.groups(); track room.id) {
+      <li>
+        <a
+          class="item"
+          [routerLink]="['/r', room.id]"
+          routerLinkActive="active"
+          [class.unread]="readMarkers.isUnread(room)"
+          [attr.title]="preview(room)"
+        >
+          <app-icon class="item-icon" name="hash" [size]="16" />
+          <span class="item-text">
+            <span class="item-name">{{ room.name }}</span>
+            <span class="item-preview">{{ preview(room) }}</span>
+          </span>
+          @if (readMarkers.isUnread(room)) {
+            <span class="dot"
+              ><span class="visually-hidden">{{ t('sidebar.unread') }}</span></span
+            >
+          }
+        </a>
+      </li>
+    } @empty {
+      @if (rooms.rooms() !== undefined) {
+        <li class="empty">{{ t('sidebar.noRooms') }}</li>
+      }
+    }
+    <li>
+      <a class="item add" routerLink="/new" routerLinkActive="active">
+        <span class="add-icon"><app-icon name="plus" [size]="14" /></span>
+        <span class="item-name">{{ t('sidebar.createRoom') }}</span>
+      </a>
+    </li>
+    <li>
+      <a class="item add" routerLink="/join" routerLinkActive="active">
+        <span class="add-icon"><app-icon name="join" [size]="14" /></span>
+        <span class="item-name">{{ t('sidebar.joinRoom') }}</span>
+      </a>
+    </li>
+  </ul>
+
+  <h2 class="section-title">{{ t('sidebar.directMessages') }}</h2>
+  <ul>
+    @for (room of rooms.directs(); track room.id) {
+      <li>
+        <a
+          class="item"
+          [routerLink]="['/r', room.id]"
+          routerLinkActive="active"
+          [class.unread]="readMarkers.isUnread(room)"
+          [attr.title]="preview(room)"
+        >
+          <app-avatar
+            class="item-icon"
+            [uid]="partnerId(room)"
+            [name]="partnerName(room)"
+            [size]="20"
+          />
+          <span class="item-text">
+            <span class="item-name">{{ partnerName(room) }}</span>
+            <span class="item-preview">{{ preview(room) }}</span>
+          </span>
+          @if (readMarkers.isUnread(room)) {
+            <span class="dot"
+              ><span class="visually-hidden">{{ t('sidebar.unread') }}</span></span
+            >
+          }
+        </a>
+      </li>
+    } @empty {
+      @if (rooms.rooms() !== undefined) {
+        <li class="empty">{{ t('sidebar.noDirects') }}</li>
+      }
+    }
+  </ul>
+</nav>
+
+<footer class="footer">
+  <a class="me" routerLink="/profile" routerLinkActive="active" [attr.title]="t('sidebar.profile')">
+    <app-avatar [uid]="uid()" [name]="profiles.me()?.displayName" [size]="28" />
+    <span class="me-name">{{ profiles.me()?.displayName }}</span>
+  </a>
+  <app-language-switcher tone="dark" />
+</footer>
