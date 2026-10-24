@@ -1,0 +1,10 @@
+{
+  "displayNameMaxLength": 40,
+  "roomNameMaxLength": 60,
+  "messageMaxLength": 2000,
+  "roomMaxMembers": 100,
+  "roomListLimit": 100,
+  "messagePageSize": 30,
+  "inviteCodeLength": 8,
+  "inviteCodeAlphabet": "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+}

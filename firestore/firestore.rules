@@ -1,0 +1,325 @@
+rules_version = '2';
+
+// Security rules for K-Chat. There is no server: these rules are the only
+// authorization layer, so every write path is pinned here.
+//
+// The house rules (see RULES.md, "Security rules"):
+// - every user-written string has a length cap from firestore/limits.json;
+// - every document pins its schema (`hasOnly`), so extra fields are refused;
+// - identity always comes from `request.auth.uid`, never from the client;
+// - every change ships with emulator tests for the allowed case, the denied
+//   case and the extra-field case (firestore/tests/).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // <limits> Generated from firestore/limits.json by `npm run limits`. Do not edit by hand.
+    function displayNameMaxLength() { return 40; }
+    function roomNameMaxLength() { return 60; }
+    function messageMaxLength() { return 2000; }
+    function roomMaxMembers() { return 100; }
+    function roomListLimit() { return 100; }
+    function messagePageSize() { return 30; }
+    function inviteCodeLength() { return 8; }
+    function inviteCodeAlphabet() { return 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; }
+    // </limits>
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // The document has exactly these keys: no missing field, no extra field.
+    function hasExactly(data, keys) {
+      return data.keys().hasAll(keys) && data.keys().hasOnly(keys);
+    }
+
+    // An update that touches no key outside `keys`.
+    function changesOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // A display or room name: trimmed, not blank, at most `max` characters.
+    function isName(value, max) {
+      return value is string && value.size() > 0 && value.size() <= max && value == value.trim();
+    }
+
+    function isMessageText(value) {
+      return value is string && value.size() <= messageMaxLength() && value.trim().size() > 0;
+    }
+
+    function isInviteCode(code) {
+      return code is string
+        && code.matches('^[' + inviteCodeAlphabet() + ']{' + string(inviteCodeLength()) + '}$');
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function roomPath(roomId) {
+      return /databases/$(database)/documents/rooms/$(roomId);
+    }
+
+    function invitePath(code) {
+      return /databases/$(database)/documents/invites/$(code);
+    }
+
+    // ----------------------------------------------------------------------
+    // users/{uid}: the public profile. Only the display name lives here; the
+    // email stays in Firebase Authentication. Profiles can be fetched one by
+    // one but never listed, so nobody can crawl the user base.
+    // ----------------------------------------------------------------------
+    match /users/{uid} {
+      allow get: if signedIn();
+
+      allow create: if isUser(uid)
+        && hasExactly(request.resource.data, ['displayName', 'createdAt', 'updatedAt'])
+        && isName(request.resource.data.displayName, displayNameMaxLength())
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isUser(uid)
+        && changesOnly(['displayName', 'updatedAt'])
+        && isName(request.resource.data.displayName, displayNameMaxLength())
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ----------------------------------------------------------------------
+    // invites/{code}: maps an invite code to its room. Anyone signed in may
+    // fetch a code they already know; nobody may list codes.
+    // ----------------------------------------------------------------------
+    match /invites/{code} {
+      allow get: if signedIn();
+
+      // Written in the same batch as the room that points at it.
+      allow create: if signedIn()
+        && isInviteCode(code)
+        && hasExactly(request.resource.data, ['roomId', 'createdBy', 'createdAt'])
+        && request.resource.data.roomId is string
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && existsAfter(roomPath(request.resource.data.roomId))
+        && getAfter(roomPath(request.resource.data.roomId)).data.inviteCode == code
+        && getAfter(roomPath(request.resource.data.roomId)).data.ownerId == request.auth.uid;
+
+      allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // ----------------------------------------------------------------------
+    // rooms/{roomId}: a group room or a 1-to-1 room. Membership is the
+    // `memberIds` list, so one query lists every room of a user.
+    // ----------------------------------------------------------------------
+    match /rooms/{roomId} {
+
+      function isMember() {
+        return signedIn() && request.auth.uid in resource.data.memberIds;
+      }
+
+      function isGroupOwner() {
+        return signedIn() && resource.data.type == 'group' && resource.data.ownerId == request.auth.uid;
+      }
+
+      function messagePath(messageId) {
+        return /databases/$(database)/documents/rooms/$(roomId)/messages/$(messageId);
+      }
+
+      // The room's `lastMessage` preview must copy a real message field by field.
+      function mirrors(preview, message) {
+        return hasExactly(preview, ['id', 'senderId', 'text', 'createdAt', 'deleted'])
+          && preview.senderId == message.senderId
+          && preview.text == message.text
+          && preview.createdAt == message.createdAt
+          && preview.deleted == message.deleted;
+      }
+
+      function isNewGroup() {
+        let room = request.resource.data;
+        return hasExactly(room, ['type', 'name', 'ownerId', 'memberIds', 'inviteCode', 'lastJoin',
+            'lastMessage', 'createdAt', 'lastActivityAt'])
+          && room.type == 'group'
+          && isName(room.name, roomNameMaxLength())
+          && room.ownerId == request.auth.uid
+          && room.memberIds == [request.auth.uid]
+          && isInviteCode(room.inviteCode)
+          && existsAfter(invitePath(room.inviteCode))
+          && getAfter(invitePath(room.inviteCode)).data.roomId == roomId
+          && room.lastJoin == null
+          && room.lastMessage == null
+          && room.createdAt == request.time
+          && room.lastActivityAt == request.time;
+      }
+
+      // A 1-to-1 room's id is the two member uids, sorted and joined by "_",
+      // so a pair of users can only ever have one such room.
+      function isNewDirect() {
+        let room = request.resource.data;
+        let ids = room.memberIds;
+        return hasExactly(room, ['type', 'memberIds', 'lastMessage', 'createdAt', 'lastActivityAt'])
+          && room.type == 'direct'
+          && ids is list
+          && ids.size() == 2
+          && ids[0] is string
+          && ids[1] is string
+          && ids[0] < ids[1]
+          && request.auth.uid in ids
+          && roomId == ids[0] + '_' + ids[1]
+          && exists(userPath(ids[0]))
+          && exists(userPath(ids[1]))
+          && room.lastMessage == null
+          && room.createdAt == request.time
+          && room.lastActivityAt == request.time;
+      }
+
+      function isRename() {
+        return isGroupOwner()
+          && changesOnly(['name'])
+          && isName(request.resource.data.name, roomNameMaxLength());
+      }
+
+      // The owner swaps the invite code: the new invite is created and the
+      // old one deleted in the same batch, so the old link stops working.
+      function isInviteReset() {
+        let code = request.resource.data.inviteCode;
+        return isGroupOwner()
+          && changesOnly(['inviteCode'])
+          && isInviteCode(code)
+          && existsAfter(invitePath(code))
+          && getAfter(invitePath(code)).data.roomId == roomId
+          && !existsAfter(invitePath(resource.data.inviteCode));
+      }
+
+      function isMemberRemoval() {
+        let before = resource.data.memberIds;
+        let after = request.resource.data.memberIds;
+        return isGroupOwner()
+          && changesOnly(['memberIds'])
+          && after is list
+          && after.size() == before.size() - 1
+          && after.toSet().size() == after.size()
+          && before.hasAll(after)
+          && request.auth.uid in after;
+      }
+
+      function isLeave() {
+        return isMember()
+          && resource.data.type == 'group'
+          && resource.data.ownerId != request.auth.uid
+          && changesOnly(['memberIds'])
+          && request.resource.data.memberIds == resource.data.memberIds.removeAll([request.auth.uid]);
+      }
+
+      // Joining proves knowledge of the current invite code: the joiner
+      // writes `lastJoin = {uid, code}` and the code must match the room's.
+      // The joiner cannot read the room, so it cannot learn the code here.
+      function isJoin() {
+        let before = resource.data.memberIds;
+        let after = request.resource.data;
+        return signedIn()
+          && resource.data.type == 'group'
+          && !(request.auth.uid in before)
+          && changesOnly(['memberIds', 'lastJoin'])
+          && after.memberIds == before.concat([request.auth.uid])
+          && after.memberIds.size() <= roomMaxMembers()
+          && after.lastJoin == {'uid': request.auth.uid, 'code': resource.data.inviteCode};
+      }
+
+      // Sending a message also moves the room up the list and refreshes its
+      // preview. The preview must point at a message created in this batch.
+      function isNewMessageActivity() {
+        let preview = request.resource.data.lastMessage;
+        return isMember()
+          && changesOnly(['lastMessage', 'lastActivityAt'])
+          && preview is map
+          && preview.id is string
+          && preview.senderId == request.auth.uid
+          && preview.createdAt == request.time
+          && request.resource.data.lastActivityAt == request.time
+          && existsAfter(messagePath(preview.id))
+          && mirrors(preview, getAfter(messagePath(preview.id)).data);
+      }
+
+      // Editing or deleting the newest message refreshes the preview.
+      function isLastMessageSync() {
+        let preview = request.resource.data.lastMessage;
+        return isMember()
+          && changesOnly(['lastMessage'])
+          && resource.data.lastMessage != null
+          && preview is map
+          && preview.id == resource.data.lastMessage.id
+          && preview.senderId == request.auth.uid
+          && mirrors(preview, getAfter(messagePath(preview.id)).data);
+      }
+
+      allow get: if isMember();
+
+      // Every list query must filter on the caller's membership and stay small.
+      allow list: if isMember() && request.query.limit <= roomListLimit();
+
+      allow create: if signedIn() && (isNewGroup() || isNewDirect());
+
+      allow update: if isRename()
+        || isInviteReset()
+        || isMemberRemoval()
+        || isLeave()
+        || isJoin()
+        || isNewMessageActivity()
+        || isLastMessageSync();
+
+      // The client deletes the messages first, then the room and its invite
+      // in one batch. A 1-to-1 room is never deleted.
+      allow delete: if isGroupOwner() && !existsAfter(invitePath(resource.data.inviteCode));
+
+      // --------------------------------------------------------------------
+      // rooms/{roomId}/messages/{messageId}
+      // --------------------------------------------------------------------
+      match /messages/{messageId} {
+
+        function room() {
+          return get(roomPath(roomId)).data;
+        }
+
+        function isRoomMember() {
+          return signedIn() && request.auth.uid in room().memberIds;
+        }
+
+        function isEdit() {
+          return changesOnly(['text', 'editedAt'])
+            && isMessageText(request.resource.data.text)
+            && request.resource.data.editedAt == request.time;
+        }
+
+        // A deleted message keeps its place in the history but loses its text.
+        function isSoftDelete() {
+          return changesOnly(['text', 'deleted'])
+            && request.resource.data.text == ''
+            && request.resource.data.deleted == true;
+        }
+
+        allow get: if isRoomMember();
+
+        // Pages are capped, so one query can never read a whole history.
+        allow list: if isRoomMember() && request.query.limit <= messagePageSize();
+
+        allow create: if isRoomMember()
+          && hasExactly(request.resource.data, ['senderId', 'text', 'createdAt', 'editedAt', 'deleted'])
+          && request.resource.data.senderId == request.auth.uid
+          && isMessageText(request.resource.data.text)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.editedAt == null
+          && request.resource.data.deleted == false;
+
+        allow update: if isRoomMember()
+          && resource.data.senderId == request.auth.uid
+          && resource.data.deleted == false
+          && (isEdit() || isSoftDelete());
+
+        // Only the group owner hard-deletes, when deleting the whole room.
+        allow delete: if signedIn() && room().type == 'group' && room().ownerId == request.auth.uid;
+      }
+    }
+  }
+}
