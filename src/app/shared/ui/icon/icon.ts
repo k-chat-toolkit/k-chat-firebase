@@ -20,6 +20,10 @@ const ICONS = {
   refresh: 'M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4',
   message: 'M4 5h16v11H9l-5 4V5z',
   info: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5v.5',
+  smile: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5v.5M15 9.5v.5',
+  reaction:
+    'M20.5 13A8.5 8.5 0 1 1 11 3.55M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5v.5M15 9.5v.5M19 2.5v6M16 5.5h6',
+  search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',
 } as const;
 
 export type IconName = keyof typeof ICONS;

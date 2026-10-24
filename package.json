@@ -16,9 +16,10 @@
     "build": "node scripts/check-config.mjs && ng build",
     "test": "ng test --watch=false && node --test \"scripts/**/*.test.mjs\"",
     "test:rules": "node scripts/sync-limits.mjs --check && node scripts/emulators.mjs rules-test",
-    "lint": "eslint . && tsc -p firestore/tsconfig.json && prettier --check . && node scripts/sync-limits.mjs --check",
+    "lint": "eslint . && tsc -p firestore/tsconfig.json && prettier --check . && node scripts/sync-limits.mjs --check && node scripts/emoji-data.mjs --check",
     "format": "prettier --write .",
     "limits": "node scripts/sync-limits.mjs",
+    "emoji-data": "node scripts/emoji-data.mjs",
     "deploy": "node scripts/check-config.mjs --deploy && ng build && firebase deploy --only hosting,firestore:rules,firestore:indexes"
   },
   "dependencies": {
@@ -40,6 +41,7 @@
     "@firebase/rules-unit-testing": "6.0.0",
     "@types/node": "24.19.1",
     "angular-eslint": "22.5.0",
+    "emojibase-data": "17.0.0",
     "eslint": "10.12.0",
     "firebase-tools": "15.33.0",
     "globals": "17.13.0",

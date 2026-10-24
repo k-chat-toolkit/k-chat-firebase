@@ -20,8 +20,12 @@ service cloud.firestore {
     function roomMaxMembers() { return 100; }
     function roomListLimit() { return 100; }
     function messagePageSize() { return 30; }
+    function messageReactionsPerUser() { return 10; }
     function inviteCodeLength() { return 8; }
     function inviteCodeAlphabet() { return 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; }
+    function emojiNameMaxLength() { return 32; }
+    function emojiImageMaxLength() { return 24000; }
+    function customEmojiMax() { return 200; }
     // </limits>
 
     function signedIn() {
@@ -68,6 +72,51 @@ service cloud.firestore {
       return /databases/$(database)/documents/invites/$(code);
     }
 
+    function emojiPath(name) {
+      return /databases/$(database)/documents/customEmoji/$(name);
+    }
+
+    function emojiCounterPath() {
+      return /databases/$(database)/documents/meta/customEmoji;
+    }
+
+    // Admins are added by hand in the Firebase console: no client can make one.
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // A custom emoji's name, as in Slack: lowercase letters, digits, "_" and "-".
+    function isEmojiName(name) {
+      return name is string
+        && name.matches('^[a-z0-9_-]{1,' + string(emojiNameMaxLength()) + '}$');
+    }
+
+    // The Spark plan has no Cloud Storage, so the image is a small data URL.
+    function isEmojiImage(value) {
+      return value is string
+        && value.size() <= emojiImageMaxLength()
+        && value.matches('^data:image/(png|gif|webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$');
+    }
+
+    // A reaction: a custom emoji as ":name:", or a Unicode emoji, which has no
+    // spaces, colons or commas and at least one character outside ASCII.
+    function reactionPattern() {
+      return '(:[a-z0-9_-]{1,' + string(emojiNameMaxLength()) + '}:'
+        + '|[^\\s:,]{0,15}[^\\x00-\\x7F][^\\s:,]{0,15})';
+    }
+
+    // One person's reactions to one message: distinct, capped, each a valid reaction.
+    // Joined with commas, the list is checked by one pattern; splitting it back must
+    // give as many items, so no item can smuggle in a comma of its own.
+    function isReactionList(value) {
+      return value is list
+        && value.size() <= messageReactionsPerUser()
+        && value.toSet().size() == value.size()
+        && (value.size() == 0
+          || (value.join(',').split(',').size() == value.size()
+            && value.join(',').matches('^' + reactionPattern() + '(,' + reactionPattern() + ')*$')));
+    }
+
     // ----------------------------------------------------------------------
     // users/{uid}: the public profile. Only the display name lives here; the
     // email stays in Firebase Authentication. Profiles can be fetched one by
@@ -107,6 +156,79 @@ service cloud.firestore {
         && getAfter(roomPath(request.resource.data.roomId)).data.ownerId == request.auth.uid;
 
       allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // ----------------------------------------------------------------------
+    // admins/{uid}: people who may delete anyone's custom emoji. Created and
+    // removed in the Firebase console only; a client may check its own.
+    // ----------------------------------------------------------------------
+    match /admins/{uid} {
+      allow get: if isUser(uid);
+    }
+
+    // ----------------------------------------------------------------------
+    // customEmoji/{name}: the app's shared custom emoji, used as ":name:" in
+    // messages and reactions. The id is the name, so a name is taken once;
+    // there is no update, so nobody can swap the image behind a name.
+    // Every create and delete also moves meta/customEmoji in the same batch,
+    // which keeps the count under customEmojiMax.
+    // ----------------------------------------------------------------------
+    match /customEmoji/{name} {
+
+      function countBefore() {
+        return exists(emojiCounterPath()) ? get(emojiCounterPath()).data.count : 0;
+      }
+
+      function counterAfter() {
+        return getAfter(emojiCounterPath()).data;
+      }
+
+      allow get: if signedIn();
+
+      // The cap on the count means one page always holds every emoji.
+      allow list: if signedIn() && request.query.limit <= customEmojiMax();
+
+      allow create: if signedIn()
+        && isEmojiName(name)
+        && hasExactly(request.resource.data, ['image', 'createdBy', 'createdAt'])
+        && isEmojiImage(request.resource.data.image)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && counterAfter().lastName == name
+        && counterAfter().count == countBefore() + 1
+        && counterAfter().count <= customEmojiMax();
+
+      allow delete: if signedIn()
+        && (resource.data.createdBy == request.auth.uid || isAdmin())
+        && counterAfter().lastName == name
+        && counterAfter().count == countBefore() - 1;
+    }
+
+    // The number of custom emoji. It moves by one, and only together with the
+    // emoji named in `lastName` appearing or disappearing in the same batch.
+    match /meta/customEmoji {
+
+      function isAdded(name) {
+        return isEmojiName(name) && !exists(emojiPath(name)) && existsAfter(emojiPath(name));
+      }
+
+      function isRemoved(name) {
+        return isEmojiName(name) && exists(emojiPath(name)) && !existsAfter(emojiPath(name));
+      }
+
+      allow get: if signedIn();
+
+      allow create: if signedIn()
+        && hasExactly(request.resource.data, ['count', 'lastName'])
+        && request.resource.data.count == 1
+        && isAdded(request.resource.data.lastName);
+
+      allow update: if signedIn()
+        && hasExactly(request.resource.data, ['count', 'lastName'])
+        && ((request.resource.data.count == resource.data.count + 1
+            && isAdded(request.resource.data.lastName))
+          || (request.resource.data.count == resource.data.count - 1
+            && isRemoved(request.resource.data.lastName)));
     }
 
     // ----------------------------------------------------------------------
@@ -312,10 +434,21 @@ service cloud.firestore {
           && request.resource.data.editedAt == null
           && request.resource.data.deleted == false;
 
+        // `reactions` maps each uid to that person's reactions. Anyone in the
+        // room may react, but only by changing the entry under their own uid.
+        function isReaction() {
+          let after = request.resource.data.get('reactions', {});
+          return changesOnly(['reactions'])
+            && after is map
+            && after.diff(resource.data.get('reactions', {})).affectedKeys()
+              .hasOnly([request.auth.uid])
+            && (!(request.auth.uid in after) || isReactionList(after[request.auth.uid]));
+        }
+
         allow update: if isRoomMember()
-          && resource.data.senderId == request.auth.uid
           && resource.data.deleted == false
-          && (isEdit() || isSoftDelete());
+          && ((resource.data.senderId == request.auth.uid && (isEdit() || isSoftDelete()))
+            || isReaction());
 
         // Only the group owner hard-deletes, when deleting the whole room.
         allow delete: if signedIn() && room().type == 'group' && room().ownerId == request.auth.uid;

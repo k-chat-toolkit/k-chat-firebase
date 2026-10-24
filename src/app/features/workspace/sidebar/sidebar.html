@@ -51,6 +51,12 @@
         <span class="item-name">{{ t('sidebar.joinRoom') }}</span>
       </a>
     </li>
+    <li>
+      <a class="item add" routerLink="/emoji" routerLinkActive="active">
+        <span class="add-icon"><app-icon name="smile" [size]="14" /></span>
+        <span class="item-name">{{ t('sidebar.customEmoji') }}</span>
+      </a>
+    </li>
   </ul>
 
   <h2 class="section-title">{{ t('sidebar.directMessages') }}</h2>

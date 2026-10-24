@@ -33,6 +33,11 @@ export class MessageFeed {
 
   private oldest: QueryDocumentSnapshot | null = null;
   private readonly unsubscribe: Unsubscribe;
+  /**
+   * Messages the server has stored at least once. A later local write, such as a
+   * reaction, also sets `hasPendingWrites`, but such a message is not unsent.
+   */
+  private readonly stored = new Set<string>();
 
   /** Oldest first. */
   readonly messages = computed(() => [...this.byId().values()].sort(compareMessages));
@@ -61,7 +66,9 @@ export class MessageFeed {
         for (const change of snapshot.docChanges({ includeMetadataChanges: true })) {
           if (change.type === 'removed') continue;
           const message = messageFromSnapshot(change.doc);
-          if (message) next.set(message.id, message);
+          if (!message) continue;
+          if (!message.pending) this.stored.add(message.id);
+          next.set(message.id, { ...message, pending: !this.stored.has(message.id) });
         }
         this.byId.set(next);
         // Until the server answers, the cache may hold fewer messages: keep moving the cursor.
@@ -95,7 +102,9 @@ export class MessageFeed {
       const next = new Map(this.byId());
       for (const document of page.docs) {
         const message = messageFromSnapshot(document);
-        if (message) next.set(message.id, message);
+        if (!message) continue;
+        this.stored.add(message.id);
+        next.set(message.id, { ...message, pending: false });
       }
       this.byId.set(next);
       if (page.docs.length > 0) this.oldest = page.docs[page.docs.length - 1];

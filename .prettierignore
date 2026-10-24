@@ -1,2 +1,3 @@
 # Prettier also skips everything in .gitignore.
 package-lock.json
+src/app/shared/emoji/unicode-emoji.json

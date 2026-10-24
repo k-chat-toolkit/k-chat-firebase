@@ -1,7 +1,19 @@
 import { inject, Injectable } from '@angular/core';
-import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import {
+  arrayRemove,
+  arrayUnion,
+  collection,
+  deleteField,
+  doc,
+  FieldPath,
+  serverTimestamp,
+  updateDoc,
+  writeBatch,
+} from 'firebase/firestore';
 import { AuthService } from '@core/auth/auth.service';
+import { AppError } from '@core/errors/app-error';
 import { FIRESTORE } from '@core/firebase/firebase.providers';
+import { LIMITS } from '@core/limits';
 import type { ChatMessage } from '@core/models/chat-message';
 import type { Room } from '@core/models/room';
 import { MessageFeed } from './message-feed';
@@ -65,6 +77,23 @@ export class MessageService {
     });
     this.syncPreview(batch, room, message, { text: '', deleted: true });
     await batch.commit();
+  }
+
+  /**
+   * Adds your reaction, or takes it back if you already reacted with `key`.
+   * Only the entry under your own uid changes. Rules: messages isReaction().
+   */
+  async toggleReaction(roomId: string, message: ChatMessage, key: string): Promise<void> {
+    const uid = this.auth.requireUid();
+    const mine = message.reactions[uid] ?? [];
+    const ref = doc(this.db, 'rooms', roomId, 'messages', message.id);
+    const field = new FieldPath('reactions', uid);
+    if (mine.includes(key)) {
+      await updateDoc(ref, field, mine.length === 1 ? deleteField() : arrayRemove(key));
+    } else {
+      if (mine.length >= LIMITS.messageReactionsPerUser) throw new AppError('too-many-reactions');
+      await updateDoc(ref, field, arrayUnion(key));
+    }
   }
 
   private syncPreview(

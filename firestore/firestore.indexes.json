@@ -16,6 +16,16 @@
       "indexes": []
     },
     {
+      "collectionGroup": "messages",
+      "fieldPath": "reactions",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "customEmoji",
+      "fieldPath": "image",
+      "indexes": []
+    },
+    {
       "collectionGroup": "rooms",
       "fieldPath": "lastMessage",
       "indexes": []

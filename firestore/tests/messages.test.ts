@@ -4,9 +4,13 @@ import {
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
+  deleteField,
   doc,
+  FieldPath,
   getDocs,
   limit,
   orderBy,
@@ -274,5 +278,64 @@ describe('messages: delete', () => {
       await setDoc(doc(db, 'rooms', pair, 'messages', 'd1'), messageData(ALICE));
     });
     await assertFails(deleteDoc(doc(dbAs(env, ALICE), 'rooms', pair, 'messages', 'd1')));
+  });
+});
+
+describe('messages: reactions', () => {
+  function react(db: Firestore, uid: string, value: unknown) {
+    return updateDoc(messageRef(db, 'm1'), new FieldPath('reactions', uid), value);
+  }
+
+  it("allows a member to react to anyone's message, with Unicode or custom emoji", async () => {
+    const db = dbAs(env, ALICE);
+    await assertSucceeds(react(db, ALICE, arrayUnion('👍')));
+    await assertSucceeds(react(db, ALICE, arrayUnion(':party:')));
+    await assertSucceeds(react(db, ALICE, arrayUnion('👨‍👩‍👧')));
+    await assertSucceeds(react(db, ALICE, arrayUnion('1️⃣')));
+  });
+
+  it('allows taking a reaction back, down to no entry at all', async () => {
+    await seed(env, (db) => updateDoc(messageRef(db, 'm1'), { reactions: { [ALICE]: ['👍'] } }));
+    const db = dbAs(env, ALICE);
+    await assertSucceeds(react(db, ALICE, arrayRemove('👍')));
+    await assertSucceeds(react(db, ALICE, deleteField()));
+  });
+
+  it("denies changing someone else's reactions", async () => {
+    await seed(env, (db) => updateDoc(messageRef(db, 'm1'), { reactions: { [BOB]: ['👍'] } }));
+    const db = dbAs(env, ALICE);
+    await assertFails(react(db, BOB, arrayUnion('🎉')));
+    await assertFails(react(db, BOB, deleteField()));
+  });
+
+  it('denies a non-member', async () => {
+    await assertFails(react(dbAs(env, CAROL), CAROL, arrayUnion('👍')));
+  });
+
+  it('denies an extra change in the same write', async () => {
+    const db = dbAs(env, ALICE);
+    await assertFails(
+      updateDoc(messageRef(db, 'm1'), new FieldPath('reactions', ALICE), ['👍'], 'text', 'Hi'),
+    );
+  });
+
+  it('denies duplicates, and more reactions than the cap', async () => {
+    const db = dbAs(env, ALICE);
+    await assertFails(react(db, ALICE, ['👍', '👍']));
+    const many = ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉'];
+    await assertSucceeds(react(db, ALICE, many.slice(0, limits.messageReactionsPerUser)));
+    await assertFails(react(db, ALICE, many.slice(0, limits.messageReactionsPerUser + 1)));
+  });
+
+  it('denies reactions that are not emoji', async () => {
+    const db = dbAs(env, ALICE);
+    for (const value of [['ok'], [':Bad:'], ['👍 👎'], ['👍,👎'], [''], [42], 'not a list']) {
+      await assertFails(react(db, ALICE, value));
+    }
+  });
+
+  it('denies reacting to a deleted message', async () => {
+    await seed(env, (db) => updateDoc(messageRef(db, 'm1'), { text: '', deleted: true }));
+    await assertFails(react(dbAs(env, ALICE), ALICE, arrayUnion('👍')));
   });
 });

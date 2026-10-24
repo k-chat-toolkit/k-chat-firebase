@@ -1,7 +1,17 @@
 import type { TranslationKey } from '@core/i18n/locales/en';
 
 /** Failures the app detects itself, before or after talking to Firebase. */
-export type AppErrorCode = 'invite-malformed' | 'invite-not-found' | 'join-refused' | 'room-gone';
+export type AppErrorCode =
+  | 'invite-malformed'
+  | 'invite-not-found'
+  | 'join-refused'
+  | 'room-gone'
+  | 'emoji-name-taken'
+  | 'emoji-limit'
+  | 'emoji-image-type'
+  | 'emoji-image-unreadable'
+  | 'emoji-image-too-large'
+  | 'too-many-reactions';
 
 export class AppError extends Error {
   constructor(readonly code: AppErrorCode) {
@@ -15,6 +25,12 @@ const APP_ERRORS: Record<AppErrorCode, TranslationKey> = {
   'invite-not-found': 'errors.inviteNotFound',
   'join-refused': 'errors.joinRefused',
   'room-gone': 'errors.roomGone',
+  'emoji-name-taken': 'errors.emojiNameTaken',
+  'emoji-limit': 'errors.emojiLimit',
+  'emoji-image-type': 'errors.emojiImageType',
+  'emoji-image-unreadable': 'errors.emojiImageUnreadable',
+  'emoji-image-too-large': 'errors.emojiImageTooLarge',
+  'too-many-reactions': 'errors.tooManyReactions',
 };
 
 /** Firebase error codes (Authentication and Firestore) the UI explains in words. */

@@ -46,6 +46,10 @@ export const routes: Routes = [
         loadComponent: () => import('@features/chat/chat-page').then((m) => m.ChatPage),
       },
       {
+        path: 'emoji',
+        loadComponent: () => import('@features/emoji/emoji-page').then((m) => m.EmojiPage),
+      },
+      {
         path: 'profile',
         loadComponent: () => import('@features/profile/profile-page').then((m) => m.ProfilePage),
       },

@@ -71,6 +71,24 @@ describe('formatMessage', () => {
     expect(formatMessage('``````')).toEqual([{ kind: 'paragraph', inlines: [text('``````')] }]);
   });
 
+  it('reads :name: tokens as custom emoji, even inside a style', () => {
+    expect(formatMessage('hi :party_parrot: *:tada:*')[0]).toEqual({
+      kind: 'paragraph',
+      inlines: [
+        text('hi '),
+        { kind: 'emoji', text: ':party_parrot:', name: 'party_parrot', style: PLAIN },
+        text(' '),
+        { kind: 'emoji', text: ':tada:', name: 'tada', style: BOLD },
+      ],
+    });
+  });
+
+  it('leaves times and uppercase names as text', () => {
+    expect(formatMessage('at 10:30 :Party:')).toEqual([
+      { kind: 'paragraph', inlines: [text('at 10:30 :Party:')] },
+    ]);
+  });
+
   it('groups lines starting with > into a quote', () => {
     expect(formatMessage('> one\n>two\nreply')).toEqual([
       { kind: 'quote', inlines: [text('one\ntwo')] },
@@ -91,6 +109,14 @@ describe('isJumboEmoji', () => {
   it('accepts a few emoji with spaces, including joined sequences and flags', () => {
     expect(isJumboEmoji('🎉')).toBe(true);
     expect(isJumboEmoji('👍🏽 🇻🇳 👨‍👩‍👧')).toBe(true);
+  });
+
+  it('counts custom emoji that exist, and refuses unknown names', () => {
+    const exists = (name: string) => name === 'party';
+    expect(isJumboEmoji(':party: 🎉', exists)).toBe(true);
+    expect(isJumboEmoji(':party::party:', exists)).toBe(true);
+    expect(isJumboEmoji(':party: :nope:', exists)).toBe(false);
+    expect(isJumboEmoji(':party:')).toBe(false);
   });
 
   it('refuses text, digits and too many emoji', () => {
