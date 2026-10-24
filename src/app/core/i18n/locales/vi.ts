@@ -2,7 +2,7 @@ import type { Translations } from './en';
 
 /** Vietnamese UI strings. The type makes a missing or misspelled key a compile error. */
 export const vi: Translations = {
-  'app.name': 'K-Chat',
+  'app.name': 'K-Chat Starter',
 
   'common.cancel': 'Hủy',
   'common.save': 'Lưu',
@@ -19,7 +19,7 @@ export const vi: Translations = {
   'locale.vi': 'Tiếng Việt',
 
   'auth.tagline': 'Ứng dụng chat nhỏ gọn, miễn phí cho nhóm của bạn.',
-  'auth.signIn.title': 'Đăng nhập K-Chat',
+  'auth.signIn.title': 'Đăng nhập {app}',
   'auth.signUp.title': 'Tạo tài khoản',
   'auth.reset.title': 'Đặt lại mật khẩu',
   'auth.email': 'Email',
@@ -54,7 +54,7 @@ export const vi: Translations = {
   'errors.joinRefused': 'Không vào được phòng: mã vừa được đổi, hoặc phòng đã đầy.',
   'errors.roomGone': 'Phòng này không còn, hoặc bạn không còn là thành viên.',
 
-  'welcome.title': 'Chào mừng đến với K-Chat',
+  'welcome.title': 'Chào mừng đến với {app}',
   'welcome.body': 'Chọn tên mà mọi người sẽ thấy.',
   'welcome.submit': 'Tiếp tục',
   'welcome.otherAccount': 'Dùng tài khoản khác',
@@ -144,5 +144,5 @@ export const vi: Translations = {
   'details.directBody': 'Cuộc trò chuyện này chỉ giữa hai người.',
 
   'notFound.title': 'Không tìm thấy trang',
-  'notFound.home': 'Quay về K-Chat',
+  'notFound.home': 'Quay về {app}',
 };

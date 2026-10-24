@@ -78,9 +78,14 @@ export class I18nService {
     });
   }
 
-  /** Translates `key` in the current locale. Bound, so it can be handed to templates. */
-  readonly t = (key: TranslationKey, params?: TranslationParams): string =>
-    interpolate(TABLES[this.locale()][key], params);
+  /**
+   * Translates `key` in the current locale. Bound, so it can be handed to templates.
+   * `{app}` is always available: the app's name, so renaming the app is one edit.
+   */
+  readonly t = (key: TranslationKey, params?: TranslationParams): string => {
+    const table = TABLES[this.locale()];
+    return interpolate(table[key], { app: table['app.name'], ...params });
+  };
 
   setLocale(locale: Locale): void {
     this.locale.set(locale);

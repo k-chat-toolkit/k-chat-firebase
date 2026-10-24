@@ -142,10 +142,11 @@ export class ChatPage {
 
     effect(() => {
       const name = this.displayName();
+      const app = this.t('app.name');
       const prefix = this.room()?.type === 'group' ? '#' : '';
-      this.title.setTitle(name ? `${prefix}${name} · K-Chat` : 'K-Chat');
+      this.title.setTitle(name ? `${prefix}${name} · ${app}` : app);
     });
-    inject(DestroyRef).onDestroy(() => this.title.setTitle('K-Chat'));
+    inject(DestroyRef).onDestroy(() => this.title.setTitle(this.t('app.name')));
   }
 
   protected toggleDetails(): void {
