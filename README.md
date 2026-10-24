@@ -8,8 +8,13 @@ The UI follows Slack's layout, with fewer features, and speaks English and Vietn
 - **Profile:** a display name, picked at the first sign-in. Avatars are initials on a color.
 - **Group rooms** that people join with an 8-character invite code or an invite link. The owner can rename the room, reset the code, remove members and delete the room. Members can leave.
 - **1-to-1 chats**, opened from the member list of a room you share.
-- **Realtime messages:** the newest 30 arrive live, older ones load 30 at a time as you scroll up. You can edit and delete your own messages.
-- **Room list** sorted by latest activity, with a preview of the last message and unread markers.
+- **Realtime messages:** the newest 30 arrive live, older ones load 30 at a time as you scroll up. You can edit and delete your own messages; ↑ in an empty box edits your last one.
+- **Formatting, as in Slack:** `*bold*`, `_italic_`, `~strike~`, `` `code` ``, code blocks between ` ``` ` fences, `> quotes` and links. A message of only a few emoji shows them large.
+- **Emoji:** a picker with search in English and Vietnamese, `:name` autocomplete, and reactions on any message.
+- **Custom emoji:** anyone can add an image as `:name:`, for everyone in the app; each one shows who added it and when. The person who added it, or an admin, can delete it.
+- **Replies and @mentions:** reply to a message with a quote of it; type `@` to mention a member. Messages that mention you or reply to you are highlighted.
+- **Room list** sorted by latest activity, with a preview of the last message, unread markers, and `@` when an unread message mentions you. The tab title counts the rooms with unread messages.
+- **Desktop notifications** while the app is open in a background tab, for every message or only direct messages and mentions.
 - **English and Vietnamese UI**, switchable at any time, with no reload.
 - **Local mode:** `npm run dev` runs everything on the Firebase Emulator Suite. You need no Firebase account for it.
 
@@ -98,19 +103,20 @@ npm run deploy   # build + Hosting + rules + indexes
 
 ## Commands
 
-| Command              | What it does                                                                                                                     |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`        | Runs the Auth and Firestore emulators on the `demo-k-chat` project, plus `ng serve` against them. Needs no Firebase account.     |
-| `npm run emulators`  | Runs the emulators alone, with the Emulator UI at http://127.0.0.1:4000.                                                         |
-| `npm run setup`      | Connects this copy to your Firebase project: writes the config, creates the database, and deploys the rules and indexes.         |
-| `npm start`          | Runs `ng serve` on http://localhost:4300 against your project. Needs `npm run setup` first.                                      |
-| `npm run build`      | Builds for production into `dist/k-chat/browser`, with your project's config.                                                    |
-| `npm run deploy`     | Builds, then deploys Hosting, the Firestore rules and the indexes to the project in `.firebaserc`.                               |
-| `npm test`           | Runs the unit tests: the Angular app (Vitest) and the Node scripts (`node --test`).                                              |
-| `npm run test:rules` | Runs the security rules suite against the Firestore emulator.                                                                    |
-| `npm run lint`       | Runs ESLint, type-checks the rules suite, checks formatting with Prettier, and checks that the rules limits match `limits.json`. |
-| `npm run format`     | Formats every file with Prettier.                                                                                                |
-| `npm run limits`     | Copies `firestore/limits.json` into the generated block of `firestore/firestore.rules`.                                          |
+| Command              | What it does                                                                                                                                                                  |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`        | Runs the Auth and Firestore emulators on the `demo-k-chat` project, plus `ng serve` against them. Needs no Firebase account.                                                  |
+| `npm run emulators`  | Runs the emulators alone, with the Emulator UI at http://127.0.0.1:4000.                                                                                                      |
+| `npm run setup`      | Connects this copy to your Firebase project: writes the config, creates the database, and deploys the rules and indexes.                                                      |
+| `npm start`          | Runs `ng serve` on http://localhost:4300 against your project. Needs `npm run setup` first.                                                                                   |
+| `npm run build`      | Builds for production into `dist/k-chat/browser`, with your project's config.                                                                                                 |
+| `npm run deploy`     | Builds, then deploys Hosting, the Firestore rules and the indexes to the project in `.firebaserc`.                                                                            |
+| `npm test`           | Runs the unit tests: the Angular app (Vitest) and the Node scripts (`node --test`).                                                                                           |
+| `npm run test:rules` | Runs the security rules suite against the Firestore emulator.                                                                                                                 |
+| `npm run lint`       | Runs ESLint, type-checks the rules suite, checks formatting with Prettier, and checks that the rules limits match `limits.json` and the emoji table matches `emojibase-data`. |
+| `npm run format`     | Formats every file with Prettier.                                                                                                                                             |
+| `npm run limits`     | Copies `firestore/limits.json` into the generated block of `firestore/firestore.rules`.                                                                                       |
+| `npm run emoji-data` | Rebuilds the emoji picker's table, `src/app/shared/emoji/unicode-emoji.json`, from the `emojibase-data` dev dependency.                                                       |
 
 Dev servers use fixed ports, so they do not collide with another Angular app on 4200 or a service on 8080:
 
@@ -166,19 +172,25 @@ How the app keeps its usage small:
   - Older messages are fetched once, 30 at a time, when you scroll up.
   - The rules refuse a message query unless it has a limit of 30 or less, and a room list query unless it has a limit of 100 or less. A bug or a curious user cannot read a whole history in one go.
 - **No per-room reads for the list.** Each room stores a copy of its last message, so the room list costs one read per room. The rules check that the copy matches a real message.
-- **Profiles once per session.** Other people's names are fetched once and cached for the session.
+- **Profiles once per session.** Other people's names are fetched once and cached for the session. The member list of a room is fetched only when you open its details or type `@`.
+- **Reactions ride on the message.** A reaction is one write to the message, and it arrives through the listener the room already has.
+- **Custom emoji are read on demand.**
+  - An emoji seen in a message costs one read per name per session.
+  - The whole list (at most 200, one page) is read once per session, when you open the picker or type `:name`.
+  - Images are shrunk in the browser to 64 px and at most 24,000 characters, so the whole list is at most about 5 MB, usually far less.
+- **Desktop notifications cost nothing.** They come from the room list's listener.
 - **A local cache.**
   - Firestore keeps a persistent cache, shared across tabs.
   - A listener that reconnects within 30 minutes is billed only for documents that changed.
   - After 30 minutes offline, the listener counts as a new query.
-- **Unread markers cost nothing.** They live in the browser's `localStorage`, not in Firestore. The trade-off: another device does not know what you read here.
+- **Unread markers cost nothing.** They live in the browser's `localStorage`, not in Firestore. The trade-off: another device does not know what you read here. Recently used emoji and the notification setting are kept the same way.
 - **Small documents.**
-  - A message holds at most 2,000 characters, so at most a few KB.
+  - A message holds at most 2,000 characters, so at most a few KB. Reactions add at most 10 per member, about 40 KB in a full room of 100.
   - A room holds at most 100 member ids, plus one message copy, so about 12 KB at worst.
   - Firestore's limit is 1 MiB per document, far away.
-  - Message text is left out of indexing, which saves storage and write work.
+  - Message text, reactions and emoji images are left out of indexing, which saves storage and write work.
 
-A rough budget: sending a message costs 2 writes (the message and the room's preview), so 20,000 writes a day allow about 10,000 messages. Opening the app and one busy room costs roughly:
+A rough budget: sending a message costs 2 writes (the message and the room's preview), so 20,000 writes a day allow about 10,000 messages. A reaction costs 1 write; a reply costs one more read, for the rules to check the original. Opening the app and one busy room costs roughly:
 
 - the rooms in your list;
 - 30 messages;
@@ -187,22 +199,22 @@ A rough budget: sending a message costs 2 writes (the message and the room's pre
 
 That comes to about 50 reads, so 50,000 reads allow about 1,000 such visits a day.
 
-The first visit downloads about 250 KB, compressed. Later visits reuse the cached files, which are fingerprinted and cached for a year; only `index.html` is fetched again. So 360 MB a day of Hosting covers more than a thousand new visitors a day.
+The first visit downloads about 250 KB, compressed. The emoji table (about 63 KB) loads the first time someone opens the picker or types `:name`. Later visits reuse the cached files, which are fingerprinted and cached for a year; only `index.html` is fetched again. So 360 MB a day of Hosting covers more than a thousand new visitors a day.
 
 Two things can still use up a quota: a very busy room, or someone signed in who hammers the API on purpose. For the second, see [App Check](https://firebase.google.com/docs/app-check) in _Not included_.
 
 ## What is not included, and why
 
-| Feature                         | Why it is left out                                                                                                                                                                                                                                                    |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Images, files, uploaded avatars | **Cloud Storage for Firebase requires the paid Blaze plan.** Since 2026-02-03, a Spark project has no access to any Storage bucket ([Firebase FAQ](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)). Avatars are initials instead. |
-| Push notifications              | Sending a push needs a trusted server holding the project's credentials; a browser cannot do it safely. The usual server is Cloud Functions, which also needs Blaze. The app has realtime updates while it is open, and unread markers.                               |
-| Cloud Functions (server code)   | Needs the Blaze plan. Everything the app needs is enforced by the security rules instead.                                                                                                                                                                             |
-| Online status and "typing…"     | Both need a stream of writes from every open tab, which uses up the 20,000 daily writes fast.                                                                                                                                                                         |
-| Searching for people            | Searching by email or name would make every profile listable. Profiles can only be fetched one by one, by id, and you learn ids by sharing a room.                                                                                                                    |
-| Blocking people                 | Not in this version. A room owner can remove members.                                                                                                                                                                                                                 |
-| Deleting your account           | Removing someone's messages from every room safely needs a server.                                                                                                                                                                                                    |
-| App Check                       | Free (reCAPTCHA Enterprise has a free tier) and recommended once you go public, but it needs keys from your project. Add it when you launch.                                                                                                                          |
+| Feature                         | Why it is left out                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Images, files, uploaded avatars | **Cloud Storage for Firebase requires the paid Blaze plan.** Since 2026-02-03, a Spark project has no access to any Storage bucket ([Firebase FAQ](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)). Avatars are initials instead. Custom emoji fit because they are tiny: they are stored in Firestore as data URLs. |
+| Push notifications              | Sending a push needs a trusted server holding the project's credentials; a browser cannot do it safely. The usual server is Cloud Functions, which also needs Blaze. The app shows desktop notifications while it is open, even in a background tab, and unread markers.                                                                                 |
+| Cloud Functions (server code)   | Needs the Blaze plan. Everything the app needs is enforced by the security rules instead.                                                                                                                                                                                                                                                                |
+| Online status and "typing…"     | Both need a stream of writes from every open tab, which uses up the 20,000 daily writes fast.                                                                                                                                                                                                                                                            |
+| Searching for people            | Searching by email or name would make every profile listable. Profiles can only be fetched one by one, by id, and you learn ids by sharing a room.                                                                                                                                                                                                       |
+| Blocking people                 | Not in this version. A room owner can remove members.                                                                                                                                                                                                                                                                                                    |
+| Deleting your account           | Removing someone's messages from every room safely needs a server.                                                                                                                                                                                                                                                                                       |
+| App Check                       | Free (reCAPTCHA Enterprise has a free tier) and recommended once you go public, but it needs keys from your project. Add it when you launch.                                                                                                                                                                                                             |
 
 ## Security model
 
@@ -218,13 +230,16 @@ There is no server, so the [security rules](firestore/firestore.rules) are the o
 
 The data model:
 
-| Path                           | Fields                                                                                                         | Who may do what                                                                                                              |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `users/{uid}`                  | `displayName`, `createdAt`, `updatedAt`                                                                        | Anyone signed in may fetch one profile; nobody may list them. Only you write yours. The email stays in Authentication.       |
-| `rooms/{roomId}`, group        | `type`, `name`, `ownerId`, `memberIds`, `inviteCode`, `lastJoin`, `lastMessage`, `createdAt`, `lastActivityAt` | Members read. The owner renames, resets the code, removes members, deletes. Members leave and refresh the preview.           |
-| `rooms/{uidA_uidB}`, 1-to-1    | `type`, `memberIds`, `lastMessage`, `createdAt`, `lastActivityAt`                                              | The two members only. The id is both uids, sorted, so a pair has one room.                                                   |
-| `rooms/{roomId}/messages/{id}` | `senderId`, `text`, `createdAt`, `editedAt`, `deleted`                                                         | Members read, 30 at a time, and send. The sender edits or soft-deletes. The group owner hard-deletes when deleting the room. |
-| `invites/{code}`               | `roomId`, `createdBy`, `createdAt`                                                                             | Anyone signed in may fetch a code they know; nobody may list codes.                                                          |
+| Path                           | Fields                                                                                                         | Who may do what                                                                                                                                                                        |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users/{uid}`                  | `displayName`, `createdAt`, `updatedAt`                                                                        | Anyone signed in may fetch one profile; nobody may list them. Only you write yours. The email stays in Authentication.                                                                 |
+| `rooms/{roomId}`, group        | `type`, `name`, `ownerId`, `memberIds`, `inviteCode`, `lastJoin`, `lastMessage`, `createdAt`, `lastActivityAt` | Members read. The owner renames, resets the code, removes members, deletes. Members leave and refresh the preview.                                                                     |
+| `rooms/{uidA_uidB}`, 1-to-1    | `type`, `memberIds`, `lastMessage`, `createdAt`, `lastActivityAt`                                              | The two members only. The id is both uids, sorted, so a pair has one room.                                                                                                             |
+| `rooms/{roomId}/messages/{id}` | `senderId`, `text`, `createdAt`, `editedAt`, `deleted`, `replyTo`, and `reactions` once someone reacts         | Members read, 30 at a time, and send. The sender edits or soft-deletes. Any member reacts, changing only `reactions.{their uid}`. The group owner hard-deletes when deleting the room. |
+| `invites/{code}`               | `roomId`, `createdBy`, `createdAt`                                                                             | Anyone signed in may fetch a code they know; nobody may list codes.                                                                                                                    |
+| `customEmoji/{name}`           | `image`, `createdBy`, `createdAt`                                                                              | Anyone signed in reads, lists one capped page, and adds. No update. The person who added it, or an admin, deletes.                                                                     |
+| `meta/customEmoji`             | `count`, `lastName`                                                                                            | Moves by one in the same batch as each emoji added or deleted, which caps the set at `customEmojiMax`.                                                                                 |
+| `admins/{uid}`                 | any                                                                                                            | Written in the Firebase console only. A client may check its own entry.                                                                                                                |
 
 How joining works without a server:
 
@@ -233,25 +248,28 @@ How joining works without a server:
 3. In the same write, the joiner sets `lastJoin = {uid, code}`. The rules accept the join only if that code equals the room's current `inviteCode`.
 4. The joiner cannot read the room before joining, so they cannot learn the code from it.
 
+A message's `replyTo` holds the original's id and sender; the rules check both against a real message in the room. A mention is stored in the text as `<@uid>`, as in Slack, so it still points at the right person after a rename.
+
 Resetting the code swaps the invite in one batch, so the old link stops working at once. A removed member who still knows the current code can rejoin. That is why the app suggests resetting the code after removing someone.
 
 ## Project structure
 
 ```
 firestore/              security rules, indexes, limits.json, and the rules test suite
-scripts/                setup, emulator and config-check scripts (Node, no dependencies)
+scripts/                setup, emulator, config-check and emoji-table scripts (Node)
 src/
   environments/         environment.ts (emulators), the per-user config and its template
   app/
     core/               app-wide services and models, no UI
       auth/             AuthService and route guards
-      data/             Firestore access: profiles, rooms, messages, unread markers
+      data/             Firestore access: profiles, rooms, messages, custom emoji; unread markers and recent emoji
       errors/           error codes → translated messages
       firebase/         providers for the Firebase app, Auth and Firestore
       i18n/             I18nService and the en / vi dictionaries
       models/           document types and their parsers
-    shared/             reusable UI (avatar, icon, dialog, language switcher) and utils
-    features/           one folder per screen: auth, onboarding, workspace, chat, rooms, direct, profile
+      notifications/    desktop notifications and the tab title
+    shared/             reusable UI (avatar, icon, dialog, language switcher), the emoji table, and utils
+    features/           one folder per screen: auth, onboarding, workspace, chat, rooms, direct, emoji, profile
 ```
 
 Imports use the TypeScript path aliases from `tsconfig.json` instead of long relative paths: `@core/*`, `@shared/*`, `@features/*`, `@env/*` and `@limits`. ESLint refuses `../../` imports.
@@ -269,6 +287,11 @@ The app uses the plain Firebase JS SDK with Angular signals: no AngularFire, so 
   3. Add the dictionary to `TABLES`, plus a `locale.fr` key in every dictionary.
 - **Colors:** the design tokens are at the top of `src/styles.css`, light and dark.
 - **Limits:** edit `firestore/limits.json`, run `npm run limits`, then `npm run test:rules`. Redeploy the rules with `npm run deploy`.
+- **Admins:** an admin may delete anyone's custom emoji. To make someone an admin:
+  1. Copy their uid from _Authentication → Users_ in the Firebase console.
+  2. In _Firestore Database_, create the collection `admins` with a document whose id is that uid. Its fields do not matter.
+  3. Delete the document to take the role back. No client can write to `admins`.
+- **Emoji table:** after upgrading `emojibase-data`, run `npm run emoji-data` and commit the new `unicode-emoji.json`. Emoji newer than version 15 are left out, since many devices cannot draw them yet.
 
 ## Troubleshooting
 
