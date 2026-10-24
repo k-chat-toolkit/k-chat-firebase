@@ -7,6 +7,10 @@ import { errorMessageKey } from '@core/errors/app-error';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/locales/en';
 import { LIMITS } from '@core/limits';
+import {
+  NotificationService,
+  type NotificationLevel,
+} from '@core/notifications/notification.service';
 import { Avatar } from '@shared/ui/avatar/avatar';
 import { Icon } from '@shared/ui/icon/icon';
 import { LanguageSwitcher } from '@shared/ui/language-switcher/language-switcher';
@@ -62,6 +66,30 @@ import { nameValidators } from '@shared/utils/validators';
       <h2>{{ t('common.language') }}</h2>
       <app-language-switcher />
 
+      <fieldset class="notifications">
+        <legend>{{ t('profile.notifications') }}</legend>
+        <p class="hint">{{ t('profile.notificationsBody') }}</p>
+        @if (notifications.permission() === 'unsupported') {
+          <p class="alert alert-info">{{ t('profile.notifyUnsupported') }}</p>
+        } @else {
+          @for (option of levels; track option.level) {
+            <label class="choice">
+              <input
+                type="radio"
+                name="notification-level"
+                [value]="option.level"
+                [checked]="notifications.level() === option.level"
+                (change)="setLevel(option.level)"
+              />
+              {{ t(option.label) }}
+            </label>
+          }
+          @if (notifications.permission() === 'denied' && notifications.level() !== 'off') {
+            <p class="alert alert-error" role="alert">{{ t('profile.notifyDenied') }}</p>
+          }
+        }
+      </fieldset>
+
       <h2 class="visually-hidden">{{ t('profile.signOut') }}</h2>
       <div class="actions sign-out">
         <button type="button" class="btn" (click)="signOut()">
@@ -90,6 +118,30 @@ import { nameValidators } from '@shared/utils/validators';
     .saved {
       align-self: center;
     }
+    .notifications {
+      margin: 32px 0 0;
+      padding: 0;
+      border: 0;
+    }
+    .notifications legend {
+      margin-bottom: 4px;
+      padding: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .notifications .hint {
+      margin: 0 0 12px;
+    }
+    .choice {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .notifications .alert {
+      margin: 8px 0 0;
+    }
     .sign-out {
       margin-top: 40px;
     }
@@ -99,9 +151,15 @@ export class ProfilePage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly profiles = inject(ProfileService);
+  protected readonly notifications = inject(NotificationService);
   protected readonly t = inject(I18nService).t;
 
   protected readonly maxLength = LIMITS.displayNameMaxLength;
+  protected readonly levels: readonly { level: NotificationLevel; label: TranslationKey }[] = [
+    { level: 'off', label: 'profile.notifyOff' },
+    { level: 'mentions', label: 'profile.notifyMentions' },
+    { level: 'all', label: 'profile.notifyAll' },
+  ];
   protected readonly busy = signal(false);
   protected readonly saved = signal(false);
   protected readonly error = signal<TranslationKey | null>(null);
@@ -140,6 +198,10 @@ export class ProfilePage {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  protected setLevel(level: NotificationLevel): void {
+    void this.notifications.setLevel(level);
   }
 
   protected async signOut(): Promise<void> {

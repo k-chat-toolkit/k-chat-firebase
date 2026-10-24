@@ -82,6 +82,8 @@ export class MessageItem {
   readonly replyRequested = output<ChatMessage>();
   /** The id of the original message, when its quote is clicked. */
   readonly jumpRequested = output<string>();
+  /** The editor closed, saved or not: the composer takes the focus back. */
+  readonly editClosed = output<void>();
 
   private readonly editor = viewChild<ElementRef<HTMLTextAreaElement>>('editor');
 
@@ -216,6 +218,13 @@ export class MessageItem {
       : this.t('reactions.summary', { names: list, emoji: group.key });
   }
 
+  /** Opens the editor, e.g. from ArrowUp in the composer. */
+  beginEdit(): void {
+    if (!this.canChange()) return;
+    this.startEdit();
+    this.host.nativeElement.scrollIntoView({ block: 'nearest' });
+  }
+
   protected startEdit(): void {
     this.draft.set(decodeMentions(this.message().text, (uid) => this.profiles.cachedName(uid)));
     this.error.set(null);
@@ -224,6 +233,7 @@ export class MessageItem {
 
   protected cancelEdit(): void {
     this.editing.set(false);
+    this.editClosed.emit();
   }
 
   protected onEditorKeydown(event: KeyboardEvent): void {
@@ -244,12 +254,12 @@ export class MessageItem {
     }));
     const text = encodeMentions(this.draft().trim(), members);
     if (text === this.message().text) {
-      this.editing.set(false);
+      this.cancelEdit();
       return;
     }
     try {
       await this.messages.edit(this.room(), this.message(), text);
-      this.editing.set(false);
+      this.cancelEdit();
     } catch (error) {
       this.error.set(errorMessageKey(error));
     }

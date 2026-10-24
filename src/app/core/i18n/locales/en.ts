@@ -73,6 +73,15 @@ export const en = {
   'profile.signedInAs': 'Signed in as {email}',
   'profile.saved': 'Saved',
   'profile.signOut': 'Sign out',
+  'profile.notifications': 'Desktop notifications',
+  'profile.notificationsBody':
+    'Shown while {app} is open in a background tab, in this browser only. Notifications with the app closed would need a server, which the free plan does not include.',
+  'profile.notifyOff': 'Off',
+  'profile.notifyMentions': 'Direct messages and mentions',
+  'profile.notifyAll': 'All new messages',
+  'profile.notifyDenied':
+    'Your browser blocks notifications for this site. Allow them in its site settings, then choose again.',
+  'profile.notifyUnsupported': "This browser can't show notifications.",
 
   'sidebar.rooms': 'Rooms',
   'sidebar.directMessages': 'Direct messages',
@@ -110,7 +119,7 @@ export const en = {
   'chat.placeholderGroup': 'Message #{name}',
   'chat.placeholderDirect': 'Message {name}',
   'chat.send': 'Send',
-  'chat.composerHint': 'Enter to send · Shift+Enter for a new line',
+  'chat.composerHint': 'Enter to send · Shift+Enter for a new line · ↑ to edit',
   'chat.loadOlder': 'Load older messages',
   'chat.beginningGroup': 'This is the very beginning of #{name}.',
   'chat.beginningDirect': 'This is the beginning of your conversation with {name}.',

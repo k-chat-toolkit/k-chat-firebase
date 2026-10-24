@@ -32,6 +32,7 @@
           [feed]="feed"
           [displayName]="displayName()"
           (reply)="startReply($event)"
+          (editClosed)="focusComposer()"
         />
       }
       @if (sendError(); as error) {
@@ -43,6 +44,7 @@
         [replyTo]="replyPreview()"
         (send)="send($event)"
         (cancelReply)="replyingTo.set(null)"
+        (editLast)="editLast()"
       />
     </div>
     @if (showDetails()) {

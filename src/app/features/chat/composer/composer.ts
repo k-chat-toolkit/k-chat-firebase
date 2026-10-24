@@ -90,6 +90,8 @@ export class Composer {
   readonly replyTo = input<ReplyPreview | null>(null);
   readonly send = output<string>();
   readonly cancelReply = output<void>();
+  /** ArrowUp in an empty box: edit your last message. */
+  readonly editLast = output<void>();
 
   private readonly textarea = viewChild.required<ElementRef<HTMLTextAreaElement>>('textarea');
 
@@ -155,6 +157,11 @@ export class Composer {
         this.dismissedAt.set(this.trigger()?.start ?? null);
         return;
       }
+    }
+    if (event.key === 'ArrowUp' && this.text() === '' && !event.isComposing) {
+      event.preventDefault();
+      this.editLast.emit();
+      return;
     }
     if (event.key === 'Escape' && this.replyTo()) {
       event.preventDefault();

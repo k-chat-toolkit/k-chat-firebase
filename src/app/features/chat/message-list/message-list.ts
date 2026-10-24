@@ -10,6 +10,7 @@ import {
   output,
   signal,
   viewChild,
+  viewChildren,
 } from '@angular/core';
 import type { MessageFeed } from '@core/data/message-feed';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -53,6 +54,10 @@ export class MessageList {
 
   /** A message's reply button was pressed. */
   readonly reply = output<ChatMessage>();
+  /** An edit was saved or cancelled. */
+  readonly editClosed = output<void>();
+
+  private readonly items = viewChildren(MessageItem);
 
   private readonly scroller = viewChild.required<ElementRef<HTMLElement>>('scroller');
 
@@ -107,6 +112,15 @@ export class MessageList {
     this.stickToBottom = true;
     const element = this.scroller().nativeElement;
     element.scrollTop = element.scrollHeight;
+  }
+
+  /** Opens the editor on the newest message `uid` can still edit. */
+  editLastOwn(uid: string): void {
+    const last = [...this.feed().messages()]
+      .reverse()
+      .find((message) => message.senderId === uid && !message.deleted && !message.pending);
+    const item = last && this.items().find((candidate) => candidate.message().id === last.id);
+    item?.beginEdit();
   }
 
   /**

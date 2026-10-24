@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { NotificationService } from '@core/notifications/notification.service';
+import { PageTitleService } from '@core/notifications/page-title.service';
 import { Sidebar } from './sidebar/sidebar';
 
 /**
@@ -45,6 +47,12 @@ import { Sidebar } from './sidebar/sidebar';
 })
 export class WorkspaceLayout {
   private readonly router = inject(Router);
+
+  constructor() {
+    // Both watch the room list for as long as you are signed in.
+    inject(NotificationService);
+    inject(PageTitleService);
+  }
 
   protected readonly atHome = toSignal(
     this.router.events.pipe(
