@@ -4,11 +4,35 @@ A rapid-setup chat toolkit that you can deploy and host yourself in minutes, run
 
 There are no servers to maintain, no containers to run, and no billing requirements for normal usage. Clone the repo, run a single setup command to connect your Firebase project, and launch your ready-to-use chat application.
 
-The user interface follows a modern Slack-like layout, supports both English and Vietnamese out-of-the-box, and uses a modular `BackendCapabilities` architecture so unsupported or quota-heavy features are cleanly disabled.
+---
+
+## 📑 Table of Contents
+
+- [🚀 Part 1: Clone & Deploy Instantly (For Users & Self-Hosters)](#-part-1-clone--deploy-instantly-for-users--self-hosters)
+  - [1. Feature Matrix & Plan Requirements](#1-feature-matrix--plan-requirements)
+  - [2. Prerequisites](#2-prerequisites)
+  - [3. Instant Setup & Deploy (3 Steps)](#3-instant-setup--deploy-3-steps)
+  - [4. Creating an Admin Account](#4-creating-an-admin-account)
+  - [5. Staying on the Free Plan](#5-staying-on-the-free-plan)
+  - [6. Common Deployment Gotchas](#6-common-deployment-gotchas)
+- [🛠️ Part 2: Developer Guide (For Extending & Customizing)](#️-part-2-developer-guide-for-extending--customizing)
+  - [1. Project Structure & Architecture](#1-project-structure--architecture)
+  - [2. Multi-Backend Architecture (`BackendCapabilities`)](#2-multi-backend-architecture-backendcapabilities)
+  - [3. Local Offline Development (Emulator Suite)](#3-local-offline-development-emulator-suite)
+  - [4. Commands Reference](#4-commands-reference)
+  - [5. Firebase CLI Power Tools](#5-firebase-cli-power-tools)
+  - [6. Configuration & Secret Management](#6-configuration--secret-management)
+  - [7. Security Rules & Data Model](#7-security-rules--data-model)
+  - [8. Customization (Branding, Translations, Limits)](#8-customization-branding-translations-limits)
+  - [9. Quality Gates & Contributing](#9-quality-gates--contributing)
 
 ---
 
-## Feature Matrix & Plan Requirements
+# 🚀 Part 1: Clone & Deploy Instantly (For Users & Self-Hosters)
+
+_Deploy your own private Slack-like chat application in under 5 minutes without touching backend code._
+
+### 1. Feature Matrix & Plan Requirements
 
 The toolkit is designed to maximize what is possible on Firebase's free **Spark plan** without incurring unexpected charges. Features requiring paid upgrades (the Blaze pay-as-you-go plan) or server code are gracefully toggled off in the UI.
 
@@ -27,6 +51,7 @@ The toolkit is designed to maximize what is possible on Firebase's free **Spark 
 | **Emoji**             | Standard Unicode Picker & Autocomplete      |    ✅ Included    |                   Included                    | Active                 |
 |                       | Custom Emoji (Base64 in Firestore, max 200) |    ✅ Included    |                   Included                    | Active                 |
 | **Notifications**     | Desktop & Tab Badge Notifications           |    ✅ Included    |                   Included                    | Active (when tab open) |
+| **Languages**         | English & Vietnamese (instant switch)       |    ✅ Included    |                   Included                    | Active                 |
 | **Media & Files**     | File & Image Attachments                    |   🔒 **Locked**   |     ⚡ **Requires Blaze** (Cloud Storage)     | Disabled with tooltip  |
 |                       | User Photo Avatars                          |   🔒 **Locked**   |   ⚡ **Requires Blaze** (Initials on Spark)   | Initials avatar        |
 | **Realtime Presence** | "User is typing..." Indicator               |   🔒 **Locked**   |    ⚡ High write frequency exhausts quota     | Disabled in config     |
@@ -36,370 +61,314 @@ The toolkit is designed to maximize what is possible on Firebase's free **Spark 
 
 ---
 
-## Contents
+### 2. Prerequisites
 
-- [Quick start](#quick-start)
-- [Feature Matrix & Plan Requirements](#feature-matrix--plan-requirements)
-- [Commands](#commands)
-- [Firebase CLI for Developers](#firebase-cli-for-developers)
-- [Config files](#config-files)
-- [Staying on the free plan](#staying-on-the-free-plan)
-- [What is not included, and why](#what-is-not-included-and-why)
-- [Security model](#security-model)
-- [Project structure](#project-structure)
-- [Customizing](#customizing)
-- [Troubleshooting](#troubleshooting)
+You only need two things to deploy your chat app:
 
-## Quick start
+1. **Node.js** 24.15 or newer (or 26+), with npm.
+2. **A Google account** (to host on Firebase).
 
-### What you need
+> [!NOTE]
+> You do **not** need Java, Docker, or a global Firebase CLI. All tools and deployment utilities are bundled in this repository.
 
-- **Node.js** 24.15 or newer (or 26+), with npm.
-- **A Google account** (to connect your free Firebase project).
-- _(Optional)_ **Java** 21 or newer: Only needed if you want to run the local offline Firebase Emulator Suite (`npm run dev` or `npm run test:rules`). End-users deploying to Firebase do **not** need Java installed.
+---
 
-The Firebase CLI comes bundled with this project (`firebase-tools` in `devDependencies`), so you do not need to install it globally.
+### 3. Instant Setup & Deploy (3 Steps)
 
-### 1. Instant Setup & Deploy (Connect to Firebase in 1 Command)
+#### Step 1: Create a free Firebase project
 
-To connect and deploy your app to Firebase:
+1. In the [Firebase Console](https://console.firebase.google.com), click **Create a project** (keep the free Spark plan).
+2. Under **Build → Authentication → Sign-in method**, enable:
+   - **Email/Password**
+   - **Google** (select your support email).
 
-1. **Create a project & turn on Auth:**
-   - In the [Firebase Console](https://console.firebase.google.com), click _Create a project_ (stay on the free Spark plan).
-   - Under _Build → Authentication → Sign-in method_, enable **Email/Password** and **Google**.
-2. **Install and run the interactive setup:**
-   ```bash
-   git clone https://github.com/k-chat-toolkit/k-chat-firebase.git k-chat
-   cd k-chat
-   npm ci
-   npm run setup
-   ```
-   The interactive wizard signs in to Google, links your Firebase project, provisions Cloud Firestore, generates your config files, and deploys the production security rules and composite indexes automatically.
-3. **Run or publish:**
-   ```bash
-   npm start        # Launch locally on http://localhost:4300 against your Firebase project
-   npm run deploy   # Build and deploy to Firebase Hosting (https://<project-id>.web.app)
-   ```
+#### Step 2: Clone and run the setup wizard
 
-`npm run deploy` prints your live site address, for example `https://<project-id>.web.app`.
+Open your terminal and run:
 
-- **First deploy:** the CLI may ask to create the default Hosting site. Answer yes.
-- **Right after the first deploy:** the composite index for the room list can take a few minutes to build. Until it is ready the room list stays empty, and the browser console says the index is building.
-- **Another domain:** if you serve the app from a domain other than `*.web.app` / `*.firebaseapp.com`, add it under _Authentication → Settings → Authorized domains_ so Google sign-in works there.
-- **Make yourself an admin:** sign in to the app once, then follow [Admins](#customizing) under _Customizing_. It takes a minute in the Firebase console.
+```bash
+git clone https://github.com/k-chat-toolkit/k-chat-firebase.git k-chat
+cd k-chat
+npm ci
+npm run setup
+```
 
-### 2. (Optional) Try Offline with the Emulator Suite
+The interactive wizard will:
 
-If you have Java installed and wish to test offline without creating a Firebase account:
+- Open a browser window to log in with your Google account.
+- Let you choose your Firebase project.
+- Automatically provision Cloud Firestore in your preferred region.
+- Write your client environment configuration.
+- Deploy the production security rules and composite indexes.
+
+#### Step 3: Deploy to the web
+
+```bash
+npm run deploy
+```
+
+Once finished, the CLI will output your live URL:
+
+```text
+✔  Deploy complete!
+Hosting URL: https://<your-project-id>.web.app
+```
+
+_(Optional: Run `npm start` before deploying if you wish to preview locally on `http://localhost:4300` against your live project)._
+
+---
+
+### 4. Creating an Admin Account
+
+Admins can delete any custom emoji across the app. To make yourself an admin:
+
+1. Sign in to your deployed chat app once so your user account is created.
+2. In the [Firebase Console](https://console.firebase.google.com), open **Build → Authentication → Users** and copy your **User UID**.
+3. Open **Build → Firestore Database → Data**. Click **Start collection** (or select existing `admins` collection):
+   - **Collection ID:** `admins`
+   - **Document ID:** Paste your **User UID**.
+   - **Field:** Add a descriptive field (e.g., `email`: `your-email@example.com`).
+4. Reload your chat app. You now have full admin privileges.
+
+---
+
+### 5. Staying on the Free Plan
+
+The Firebase **Spark plan** offers generous daily and monthly allowances:
+
+| Service             | Free Daily Allowance                                           | How K-Chat Stays Within Limits                                                                                                                                                                                         |
+| :------------------ | :------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cloud Firestore** | 50,000 reads / day<br>20,000 writes / day<br>1 GiB stored data | • Tabs keep at most 3 realtime listeners.<br>• Older messages load in pages of 30 on demand.<br>• Room list uses last-message copies (1 read per room).<br>• Custom emoji are stored as compressed base64 (max 24 KB). |
+| **Authentication**  | 50,000 monthly active users                                    | • Email/Password and Google sign-in are free.                                                                                                                                                                          |
+| **Hosting**         | 10 GB stored<br>360 MB transfer / day                          | • Compressed initial bundle is ~250 KB.<br>• Assets are fingerprinted and cached for 1 year.                                                                                                                           |
+
+There are no surprise bills: if daily quota is reached, operations pause until midnight Pacific Time.
+
+---
+
+### 6. Common Deployment Gotchas
+
+- **Room list is empty right after first deploy:** Firestore composite indexes take 2–5 minutes to build on Google's servers. Refresh the page after a few minutes.
+- **Google Sign-in error (`auth/unauthorized-domain`):** If you use a custom domain, add it under **Authentication → Settings → Authorized domains** in the Firebase Console.
+- **"This sign-in method is not enabled":** Make sure you enabled Email/Password or Google under **Authentication → Sign-in method**.
+
+---
+
+# 🛠️ Part 2: Developer Guide (For Extending & Customizing)
+
+_For developers who want to inspect the source code, run offline emulators, add features, or customize styling._
+
+---
+
+### 1. Project Structure & Architecture
+
+```text
+k-chat-firebase/
+├── firestore/                  # Firestore security rules, composite indexes, and limits.json
+├── scripts/                    # Interactive setup, emulator runner, and configuration validators
+├── src/
+│   ├── environments/           # Environment configuration (local emulator vs production)
+│   ├── app/
+│   │   ├── core/               # Singleton services, authentication, models, and i18n
+│   │   │   ├── auth/           # AuthService and route guards
+│   │   │   ├── backend/        # BackendCapabilities contract and feature flags
+│   │   │   ├── data/           # Firestore data services (profiles, rooms, messages, emoji)
+│   │   │   ├── firebase/       # Direct Firebase SDK providers (no AngularFire wrapper)
+│   │   │   └── i18n/           # Translation dictionaries (English and Vietnamese)
+│   │   ├── shared/             # Reusable UI primitives (dialogs, icons, avatar, formatting utils)
+│   │   └── features/           # Screen modules: auth, workspace, chat, rooms, direct, profile
+```
+
+- **Architecture Standards:**
+  - Standalone components throughout (`OnPush` change detection).
+  - Reactive state managed using **Angular Signals**.
+  - TypeScript path aliases strictly enforced: `@core/*`, `@shared/*`, `@features/*`, `@env/*`, `@limits`. Relative `../../` cross-layer imports are refused by ESLint.
+  - Plain Firebase JS SDK with zero wrapper lag.
+
+---
+
+### 2. Multi-Backend Architecture (`BackendCapabilities`)
+
+The frontend is decoupled from Firebase-specific assumptions using the `BackendCapabilities` contract (`@core/backend/backend-capabilities`):
+
+```typescript
+export interface BackendCapabilities {
+  attachments: boolean; // File and image uploads
+  typingIndicator: boolean; // Live typing notifications
+  presence: boolean; // Online/offline status badges
+  customEmoji: boolean; // User-uploaded custom emoji
+  reactions: boolean; // Emoji reactions on messages
+  replies: boolean; // Threaded quote replies
+  formattingToolbar: boolean; // Slack-style markdown editor toolbar
+  editMessage: boolean; // Message edit support
+  deleteMessage: boolean; // Soft-delete support
+  mentions: boolean; // Member @mention support
+  pinnedMessages: boolean; // Message pinning
+}
+```
+
+When integrating another backend (such as Convex, Supabase, or PocketBase), simply provide an alternate capabilities object. Any unsupported feature automatically and cleanly disables itself in the UI.
+
+---
+
+### 3. Local Offline Development (Emulator Suite)
+
+If you have **Java 21+** installed, you can develop and test the entire stack completely offline without touching real Firebase servers:
 
 ```bash
 npm run dev
 ```
 
-1. Open http://localhost:4300 and create a local account. Accounts and messages live in the local emulators only (persisted in `.emulator-data/`).
-2. To chat with a second user, open the app in a private/incognito window or at http://[::1]:4300.
-3. The Emulator UI at http://127.0.0.1:4000 lets you inspect local users and documents.
-4. Press `Ctrl+C` to stop. Emulators save data on exit.
+1. Open `http://localhost:4300` (User 1).
+2. Open `http://[::1]:4300` or an Incognito tab (User 2) to test realtime messaging.
+3. Open `http://127.0.0.1:4000` to inspect local Authentication and Firestore records via the **Firebase Emulator UI**.
+4. Test data persists locally in `.emulator-data/` between runs.
 
-## Commands
+---
 
-| Command                  | What it does                                                                                                                                                                  |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`            | Runs the Auth and Firestore emulators on the `demo-k-chat` project, plus `ng serve` against them. Needs no Firebase account.                                                  |
-| `npm run emulators`      | Runs the emulators alone, with the Emulator UI at http://127.0.0.1:4000.                                                                                                      |
-| `npm run setup`          | Connects this copy to your Firebase project: writes the config, creates the database, and deploys the rules and indexes.                                                      |
-| `npm start`              | Runs `ng serve` on http://localhost:4300 against your project. Needs `npm run setup` first.                                                                                   |
-| `npm run build`          | Builds for production into `dist/k-chat/browser`, with your project's config.                                                                                                 |
-| `npm run deploy`         | Builds, then deploys Hosting, the Firestore rules and the indexes to the project in `.firebaserc`.                                                                            |
-| `npm run deploy:hosting` | Builds, then deploys only Hosting (skips rules and indexes for fast ~5–10s updates).                                                                                          |
-| `npm run deploy:rules`   | Deploys only Firestore security rules (no frontend rebuild).                                                                                                                  |
-| `npm test`               | Runs the unit tests: the Angular app (Vitest) and the Node scripts (`node --test`).                                                                                           |
-| `npm run test:rules`     | Runs the security rules suite against the Firestore emulator.                                                                                                                 |
-| `npm run lint`           | Runs ESLint, type-checks the rules suite, checks formatting with Prettier, and checks that the rules limits match `limits.json` and the emoji table matches `emojibase-data`. |
-| `npm run format`         | Formats every file with Prettier.                                                                                                                                             |
-| `npm run limits`         | Copies `firestore/limits.json` into the generated block of `firestore/firestore.rules`.                                                                                       |
-| `npm run emoji-data`     | Rebuilds the emoji picker's table, `src/app/shared/emoji/unicode-emoji.json`, from the `emojibase-data` dev dependency.                                                       |
+### 4. Commands Reference
 
-Dev servers use fixed ports, so they do not collide with another Angular app on 4200 or a service on 8080:
+| Command                  | Description                                                                   |
+| :----------------------- | :---------------------------------------------------------------------------- |
+| `npm run dev`            | Runs local Auth + Firestore emulators and starts the Angular dev server.      |
+| `npm run emulators`      | Runs only the Firebase emulators with Emulator UI on `http://127.0.0.1:4000`. |
+| `npm run setup`          | Connects to a Firebase project, creates database, and deploys rules.          |
+| `npm start`              | Runs Angular dev server on `http://localhost:4300` against your live project. |
+| `npm run build`          | Builds production artifacts into `dist/k-chat/browser`.                       |
+| `npm run deploy`         | Full deploy: builds app, deploys Hosting, Firestore rules, and indexes.       |
+| `npm run deploy:hosting` | **Fast deploy:** builds and deploys only Hosting (~5-10s).                    |
+| `npm run deploy:rules`   | Deploys only Firestore security rules without rebuilding frontend.            |
+| `npm test`               | Runs unit tests (82 Vitest tests + 25 Node test runner scripts).              |
+| `npm run test:rules`     | Runs 126 security rules unit tests on the Firestore emulator.                 |
+| `npm run lint`           | Runs ESLint, Prettier check, limits sync check, and emoji data check.         |
+| `npm run format`         | Formats all source files with Prettier.                                       |
+| `npm run limits`         | Syncs `firestore/limits.json` into `firestore.rules`.                         |
+| `npm run emoji-data`     | Rebuilds `unicode-emoji.json` table from `emojibase-data`.                    |
 
-| Service     | Port |
-| ----------- | ---- |
-| App         | 4300 |
-| Auth        | 9099 |
-| Firestore   | 8180 |
-| Hosting     | 5050 |
-| Emulator UI | 4000 |
+**Default Port Allocations:**
 
-To change a port, edit `firebase.json`, plus `src/environments/environment.ts` for the emulators, or `angular.json` for the app.
+- Angular App: `4300`
+- Auth Emulator: `9099`
+- Firestore Emulator: `8180`
+- Hosting Emulator: `5050`
+- Emulator UI: `4000`
 
-## Firebase CLI for Developers
+---
 
-For developers who manage deployments directly or want fast, granular control without running full pipeline checks, the bundled `firebase-tools` CLI can be invoked with `npx firebase` (or via dedicated npm scripts).
+### 5. Firebase CLI Power Tools
 
-### 1. Fast Hosting-Only Deployments
+For fast, developer-friendly deployments without running full checks:
 
-When you only update Angular templates, styles, or frontend logic, skip redeploying Firestore rules and indexes for near-instant uploads (~5–10s):
+#### A. Fast Hosting Updates
 
 ```bash
-# Using npm shortcut:
 npm run deploy:hosting
-
-# Or direct CLI with release note:
-npm run build
-npx firebase deploy --only hosting -m "Update Slack toolbar and composer styles"
+# or with a release message:
+npm run build && npx firebase deploy --only hosting -m "Update composer styling"
 ```
 
-### 2. Preview Channels (Zero-Risk Branch & PR Previews)
+#### B. Preview Channels (Temporary PR & Branch Demos)
 
-Firebase Hosting Preview Channels allow you to test changes on a temporary live URL without touching production:
+Deploy to a preview channel without affecting live production:
 
 ```bash
 npm run build
-
-# Deploy to a preview channel (default expires in 7 days):
-npx firebase hosting:channel:deploy pr-feature-preview
-
-# Deploy with custom expiration (e.g. 24 hours):
 npx firebase hosting:channel:deploy pr-feature-preview --expires 24h
 ```
 
-This outputs a dedicated URL (e.g., `https://<project-id>--pr-feature-preview-<hash>.web.app`).
+- List preview channels: `npx firebase hosting:channel:list`
+- Delete preview channel: `npx firebase hosting:channel:delete pr-feature-preview`
 
-**Manage preview channels:**
-
-```bash
-# List all active preview channels:
-npx firebase hosting:channel:list
-
-# Delete a preview channel when done:
-npx firebase hosting:channel:delete pr-feature-preview
-```
-
-### 3. Deploy Security Rules or Indexes Only
-
-Modify and deploy database rules without touching or rebuilding the frontend application:
+#### C. Deploy Security Rules or Indexes Only
 
 ```bash
-# Deploy Firestore security rules only:
-npm run deploy:rules
-# or:
 npx firebase deploy --only firestore:rules
-
-# Deploy Firestore indexes only:
 npx firebase deploy --only firestore:indexes
 ```
 
-### 4. Managing Multi-Environment Projects (Dev / Staging / Prod)
-
-Easily switch targets between different Firebase projects using `.firebaserc` aliases:
+#### D. Switch Environments (Dev / Staging / Prod)
 
 ```bash
-# List all accessible Firebase projects:
-npx firebase projects:list
-
-# Check the currently active project:
-npx firebase use
-
-# Add an environment alias (e.g., 'staging' or 'prod'):
-npx firebase use --add
-
-# Switch to a target environment and deploy:
-npx firebase use prod
+npx firebase use --add    # Associate a project alias
+npx firebase use prod     # Switch active project
 npm run deploy
 ```
 
-### 5. Instant Rollback
-
-If a bad frontend build goes to production, rollback instantly via Firebase Console (_Hosting → Release history → Roll back_) or clone a previous release tag:
+#### E. Instant Rollback
 
 ```bash
-# Clone a specific preview channel or version to live production:
+# Rollback live production to a previous version or preview channel:
 npx firebase hosting:clone <project-id>:<channel-or-version> <project-id>:live
 ```
 
-## Config files
+---
 
-Every file that holds configuration. Only your Firebase CLI sign-in is a secret, and it never lives in the repository.
+### 6. Configuration & Secret Management
 
-| File                                               | Created by                                | Where                                                                                   | Contents                                                                                                                                  | Secret?                                                                                                    |
-| -------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `src/environments/environment.firebase.ts`         | `npm run setup`, or you, from the example | your clone only (gitignored)                                                            | Your web app config: `apiKey`, `authDomain`, `projectId`, `appId`, `messagingSenderId`                                                    | No. It identifies your project; the security rules protect the data. It is gitignored because it is yours. |
-| `src/environments/environment.firebase.example.ts` | this repository                           | committed                                                                               | A template of the file above, with placeholders                                                                                           | No                                                                                                         |
-| `src/environments/environment.ts`                  | this repository                           | committed                                                                               | The local setup: the `demo-k-chat` project and the emulator addresses. Builds for your project replace it with `environment.firebase.ts`. | No                                                                                                         |
-| `.firebaserc`                                      | `npm run setup`                           | your clone only (gitignored)                                                            | The default project of the Firebase CLI, used by `npm run deploy`                                                                         | No                                                                                                         |
-| `.firebaserc.example`                              | this repository                           | committed                                                                               | A template of the file above                                                                                                              | No                                                                                                         |
-| `firebase.json`                                    | this repository                           | committed                                                                               | Hosting settings (folder, rewrites, headers), Firestore file paths, emulator ports                                                        | No                                                                                                         |
-| `firestore/firestore.rules`                        | this repository                           | committed                                                                               | The security rules. The `<limits>` block is generated from `limits.json`.                                                                 | No                                                                                                         |
-| `firestore/firestore.indexes.json`                 | this repository                           | committed                                                                               | The room list's composite index; text fields left out of indexing                                                                         | No                                                                                                         |
-| `firestore/limits.json`                            | this repository                           | committed                                                                               | Length caps and page sizes, shared by the app and the rules                                                                               | No                                                                                                         |
-| `.emulator-data/`                                  | `npm run dev`, `npm run emulators`        | your clone only (gitignored)                                                            | The local emulators' users and documents                                                                                                  | No (test data)                                                                                             |
-| Firebase CLI sign-in                               | `npm run setup` (or `npx firebase login`) | your user profile (`~/.config/configstore/firebase-tools.json`), outside the repository | OAuth tokens for your Google account                                                                                                      | **Yes.** Never copy it into the repository. `npx firebase logout` removes it.                              |
+| File                                               | Status            | Description                                            |          Secret?          |
+| :------------------------------------------------- | :---------------- | :----------------------------------------------------- | :-----------------------: |
+| `src/environments/environment.firebase.ts`         | Gitignored        | Active Firebase web app config.                        | No (public client config) |
+| `src/environments/environment.firebase.example.ts` | Committed         | Template with placeholders.                            |            No             |
+| `src/environments/environment.ts`                  | Committed         | Local emulator configuration (`demo-k-chat`).          |            No             |
+| `.firebaserc`                                      | Gitignored        | Default Firebase CLI project target.                   |            No             |
+| `firebase.json`                                    | Committed         | Hosting rewrite rules and emulator port mappings.      |            No             |
+| `firestore/limits.json`                            | Committed         | Single source of truth for input lengths and caps.     |            No             |
+| CLI OAuth Token                                    | Profile directory | Stored in `~/.config/configstore/firebase-tools.json`. |  **YES (Never commit)**   |
 
-Setup reads `environment.firebase.ts` and `.firebaserc` before writing them. If they point at another project, it asks before replacing them.
+---
 
-## Staying on the free plan
+### 7. Security Rules & Data Model
 
-The Spark plan's daily and monthly allowances, per the [Firebase pricing page](https://firebase.google.com/pricing) as of October 2026:
+Security in this architecture is 100% serverless: [`firestore/firestore.rules`](firestore/firestore.rules) is the sole authorization layer.
 
-| Service        | Free allowance                                                                                                                                                           |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Firestore      | 1 GiB stored; 50,000 reads, 20,000 writes and 20,000 deletes **per day** (reset around midnight Pacific time); 10 GiB outbound per month. One free database per project. |
-| Authentication | 50,000 monthly active users with email/password and Google. Phone sign-in is not available on Spark.                                                                     |
-| Hosting        | 10 GB stored, 360 MB transferred per day                                                                                                                                 |
+- **4 Core Rules Principles:**
+  1. **Strict length limits:** User input caps live in `firestore/limits.json` and are synced to rules via `npm run limits`.
+  2. **Pinned document schemas:** Creates require `hasAll` and `hasOnly`. Updates require `diff().affectedKeys().hasOnly(...)`. Extra fields are denied.
+  3. **Server-side identity:** `senderId`, `ownerId`, and `createdBy` must match `request.auth.uid`. Timestamps must equal `request.time` (`serverTimestamp()`).
+  4. **Strict emulator tests:** 126 unit tests in `firestore/tests/` verify allowed, denied, and malformed write cases.
 
-Past an allowance, requests fail until it resets: there is no surprise bill on Spark. Actions then fail with _"This app has used up today's free quota"_.
-
-How the app keeps its usage small:
-
-- **Few listeners.** A tab holds at most three realtime listeners:
-  - your profile;
-  - your room list (one query for every room you are in);
-  - the open room's newest 30 messages.
-- **Pages, not histories.**
-  - Older messages are fetched once, 30 at a time, when you scroll up.
-  - The rules refuse a message query unless it has a limit of 30 or less, and a room list query unless it has a limit of 100 or less. A bug or a curious user cannot read a whole history in one go.
-- **No per-room reads for the list.** Each room stores a copy of its last message, so the room list costs one read per room. The rules check that the copy matches a real message.
-- **Profiles once per session.** Other people's names are fetched once and cached for the session. The member list of a room is fetched only when you open its details or type `@`.
-- **Reactions ride on the message.** A reaction is one write to the message, and it arrives through the listener the room already has.
-- **Custom emoji are read on demand.**
-  - An emoji seen in a message costs one read per name per session.
-  - The whole list (at most 200, one page) is read once per session, when you open the picker or type `:name`.
-  - Images are shrunk in the browser to 64 px and at most 24,000 characters, so the whole list is at most about 5 MB, usually far less.
-- **Desktop notifications cost nothing.** They come from the room list's listener.
-- **A local cache.**
-  - Firestore keeps a persistent cache, shared across tabs.
-  - A listener that reconnects within 30 minutes is billed only for documents that changed.
-  - After 30 minutes offline, the listener counts as a new query.
-- **Unread markers cost nothing.** They live in the browser's `localStorage`, not in Firestore. The trade-off: another device does not know what you read here. Recently used emoji and the notification setting are kept the same way.
-- **Small documents.**
-  - A message holds at most 2,000 characters, so at most a few KB. Reactions add at most 10 per member, about 40 KB in a full room of 100.
-  - A room holds at most 100 member ids, plus one message copy, so about 12 KB at worst.
-  - Firestore's limit is 1 MiB per document, far away.
-  - Message text, reactions and emoji images are left out of indexing, which saves storage and write work.
-
-A rough budget: sending a message costs 2 writes (the message and the room's preview), so 20,000 writes a day allow about 10,000 messages. A reaction costs 1 write; a reply costs one more read, for the rules to check the original. Opening the app and one busy room costs roughly:
-
-- the rooms in your list;
-- 30 messages;
-- one read for the rules' membership check;
-- one read per new face.
-
-That comes to about 50 reads, so 50,000 reads allow about 1,000 such visits a day.
-
-The first visit downloads about 250 KB, compressed. The emoji table (about 63 KB) loads the first time someone opens the picker or types `:name`. Later visits reuse the cached files, which are fingerprinted and cached for a year; only `index.html` is fetched again. So 360 MB a day of Hosting covers more than a thousand new visitors a day.
-
-Two things can still use up a quota: a very busy room, or someone signed in who hammers the API on purpose. For the second, see [App Check](https://firebase.google.com/docs/app-check) in _Not included_.
-
-## What is not included, and why
-
-| Feature                         | Why it is left out                                                                                                                                                                                                                                                                                                                                       |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Images, files, uploaded avatars | **Cloud Storage for Firebase requires the paid Blaze plan.** Since 2026-02-03, a Spark project has no access to any Storage bucket ([Firebase FAQ](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)). Avatars are initials instead. Custom emoji fit because they are tiny: they are stored in Firestore as data URLs. |
-| Push notifications              | Sending a push needs a trusted server holding the project's credentials; a browser cannot do it safely. The usual server is Cloud Functions, which also needs Blaze. The app shows desktop notifications while it is open, even in a background tab, and unread markers.                                                                                 |
-| Cloud Functions (server code)   | Needs the Blaze plan. Everything the app needs is enforced by the security rules instead.                                                                                                                                                                                                                                                                |
-| Online status and "typing…"     | Both need a stream of writes from every open tab, which uses up the 20,000 daily writes fast.                                                                                                                                                                                                                                                            |
-| Searching for people            | Searching by email or name would make every profile listable. Profiles can only be fetched one by one, by id, and you learn ids by sharing a room.                                                                                                                                                                                                       |
-| Blocking people                 | Not in this version. A room owner can remove members.                                                                                                                                                                                                                                                                                                    |
-| Deleting your account           | Removing someone's messages from every room safely needs a server.                                                                                                                                                                                                                                                                                       |
-| App Check                       | Free (reCAPTCHA Enterprise has a free tier) and recommended once you go public, but it needs keys from your project. Add it when you launch.                                                                                                                                                                                                             |
-
-## Security model
-
-There is no server, so the [security rules](firestore/firestore.rules) are the only thing that decides who may read or write what. Four rules of thumb run through them:
-
-1. **Every string a user writes has a length cap.**
-   - The caps live in one file, [`firestore/limits.json`](firestore/limits.json).
-   - The app imports it, and `npm run limits` copies it into the rules.
-   - `npm run lint` fails if the two drift apart.
-2. **Every document has a fixed schema.** Creates must have exactly the expected keys (`hasAll` + `hasOnly`). Updates may change only the keys of one allowed action (`diff().affectedKeys().hasOnly`). An extra field is refused.
-3. **Identity comes from `request.auth.uid`, never from the client.** For example, a message's `senderId` must equal the caller's uid, and so must a room's `ownerId` at creation.
-4. **Every write path has emulator tests** for the allowed case, the denied case and the extra-field case: see [`firestore/tests/`](firestore/tests).
-
-The data model:
-
-| Path                           | Fields                                                                                                         | Who may do what                                                                                                                                                                        |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `users/{uid}`                  | `displayName`, `createdAt`, `updatedAt`                                                                        | Anyone signed in may fetch one profile; nobody may list them. Only you write yours. The email stays in Authentication.                                                                 |
-| `rooms/{roomId}`, group        | `type`, `name`, `ownerId`, `memberIds`, `inviteCode`, `lastJoin`, `lastMessage`, `createdAt`, `lastActivityAt` | Members read. The owner renames, resets the code, removes members, deletes. Members leave and refresh the preview.                                                                     |
-| `rooms/{uidA_uidB}`, 1-to-1    | `type`, `memberIds`, `lastMessage`, `createdAt`, `lastActivityAt`                                              | The two members only. The id is both uids, sorted, so a pair has one room.                                                                                                             |
-| `rooms/{roomId}/messages/{id}` | `senderId`, `text`, `createdAt`, `editedAt`, `deleted`, `replyTo`, and `reactions` once someone reacts         | Members read, 30 at a time, and send. The sender edits or soft-deletes. Any member reacts, changing only `reactions.{their uid}`. The group owner hard-deletes when deleting the room. |
-| `invites/{code}`               | `roomId`, `createdBy`, `createdAt`                                                                             | Anyone signed in may fetch a code they know; nobody may list codes.                                                                                                                    |
-| `customEmoji/{name}`           | `image`, `createdBy`, `createdAt`                                                                              | Anyone signed in reads, lists one capped page, and adds. No update. The person who added it, or an admin, deletes.                                                                     |
-| `meta/customEmoji`             | `count`, `lastName`                                                                                            | Moves by one in the same batch as each emoji added or deleted, which caps the set at `customEmojiMax`.                                                                                 |
-| `admins/{uid}`                 | any                                                                                                            | Written in the Firebase console only. A client may check its own entry.                                                                                                                |
-
-How joining works without a server:
-
-1. The joiner looks up `invites/{code}` to find the room.
-2. The joiner adds their own uid to `memberIds`.
-3. In the same write, the joiner sets `lastJoin = {uid, code}`. The rules accept the join only if that code equals the room's current `inviteCode`.
-4. The joiner cannot read the room before joining, so they cannot learn the code from it.
-
-A message's `replyTo` holds the original's id and sender; the rules check both against a real message in the room. A mention is stored in the text as `<@uid>`, as in Slack, so it still points at the right person after a rename.
-
-Resetting the code swaps the invite in one batch, so the old link stops working at once. A removed member who still knows the current code can rejoin. That is why the app suggests resetting the code after removing someone.
-
-## Project structure
-
-```
-firestore/              security rules, indexes, limits.json, and the rules test suite
-scripts/                setup, emulator, config-check and emoji-table scripts (Node)
-src/
-  environments/         environment.ts (emulators), the per-user config and its template
-  app/
-    core/               app-wide services and models, no UI
-      auth/             AuthService and route guards
-      data/             Firestore access: profiles, rooms, messages, custom emoji; unread markers and recent emoji
-      errors/           error codes → translated messages
-      firebase/         providers for the Firebase app, Auth and Firestore
-      i18n/             I18nService and the en / vi dictionaries
-      models/           document types and their parsers
-      notifications/    desktop notifications and the tab title
-    shared/             reusable UI (avatar, icon, dialog, language switcher), the emoji table, and utils
-    features/           one folder per screen: auth, onboarding, workspace, chat, rooms, direct, emoji, profile
+```text
+Firestore Collections:
+├── users/{uid}                  # User profile (displayName, createdAt, updatedAt)
+├── rooms/{roomId}               # Group chat rooms with member list and inviteCode
+├── rooms/{uidA_uidB}            # 1-to-1 direct chat rooms
+│   └── messages/{id}            # Realtime messages (text, senderId, replyTo, reactions)
+├── invites/{code}               # Invite code to roomId mapping
+├── customEmoji/{name}           # Custom emoji base64 images (max 200)
+├── meta/customEmoji             # Atomic counter tracking customEmoji count
+└── admins/{uid}                 # Admin permissions list (written in Console only)
 ```
 
-Imports use the TypeScript path aliases from `tsconfig.json` instead of long relative paths: `@core/*`, `@shared/*`, `@features/*`, `@env/*` and `@limits`. ESLint refuses `../../` imports.
+---
 
-The app uses the plain Firebase JS SDK with Angular signals: no AngularFire, so it never waits for a wrapper to support a new Angular release. Every page is standalone, `OnPush` and lazy-loaded.
+### 8. Customization (Branding, Translations, Limits)
 
-## Customizing
+- **App Branding & Name:**
+  - Update `app.name` in `src/app/core/i18n/locales/en.ts` and `vi.ts`.
+  - Update `<title>` in `src/index.html`.
+- **Styling & Design Tokens:**
+  - Colors, typography, and dark-mode variables are defined at the top of `src/styles.css`.
+- **Adding Languages:**
+  - Copy `src/app/core/i18n/locales/vi.ts` to `src/app/core/i18n/locales/<locale>.ts`.
+  - Register the new locale in `src/app/core/i18n/i18n.service.ts`.
+- **Adjusting Data Limits:**
+  - Modify `firestore/limits.json`, run `npm run limits`, and redeploy rules using `npm run deploy:rules`.
 
-- **Name and texts:**
-  - Every UI string is in `src/app/core/i18n/locales/en.ts` and `vi.ts`. The type check fails if a key is missing from a language.
-  - The app's name is the `app.name` key; other strings say `{app}` and get it filled in. To rename the app, change `app.name` in each locale, the `<title>` in `src/index.html`, and `APP_NAME` in `scripts/lib/setup-flow.mjs` (the name `npm run setup` gives a new web app).
-- **Another language:**
-  1. Copy `vi.ts` to, say, `fr.ts` and translate it.
-  2. Add `'fr'` to `Locale` and `LOCALES` in `src/app/core/i18n/i18n.service.ts`.
-  3. Add the dictionary to `TABLES`, plus a `locale.fr` key in every dictionary.
-- **Colors:** the design tokens are at the top of `src/styles.css`, light and dark.
-- **Limits:** edit `firestore/limits.json`, run `npm run limits`, then `npm run test:rules`. Redeploy the rules with `npm run deploy`.
-- **Admins:** an admin may delete anyone's custom emoji. The role is already in the rules that setup deploys; you only list who has it. The list is the Firestore collection `admins`, and the rules let no client write to it, so a user can never make themselves an admin: only the Firebase console can.
-  1. The person signs in to the app once, so their account exists.
-  2. In the Firebase console, open _Build → Authentication → Users_ and copy their **User UID** (the copy icon next to it). The email column tells you who is who.
-  3. Open _Build → Firestore Database → Data_. Choose _Start collection_ (the first time) with the collection ID `admins`, or open `admins` and choose _Add document_.
-  4. Paste the UID as the **Document ID**. Add one field so the list is readable, for example `email` (string) set to their address; the rules only look at the ID.
-  5. The person reloads the app. To take the role back, delete the document.
+---
 
-  On the emulators (`npm run dev`), do the same in the Emulator UI at http://127.0.0.1:4000: the users are under _Authentication_, the data under _Firestore_.
+### 9. Quality Gates & Contributing
 
-- **Emoji table:** after upgrading `emojibase-data`, run `npm run emoji-data` and commit the new `unicode-emoji.json`. Emoji newer than version 15 are left out, since many devices cannot draw them yet.
+Before opening a pull request or merging to `main`, ensure all quality gates pass:
 
-## Troubleshooting
+```bash
+npm run lint          # 100% clean check (ESLint, Prettier, Limits, Emoji)
+npm test              # 107/107 unit tests pass
+npm run test:rules    # 126/126 security rules pass on emulator
+```
 
-- **`Could not start Firestore Emulator, port taken`**
-  - Another emulator is still running. Stop it, or change the port in `firebase.json`.
-  - On Windows with Oracle's Java, the `java` on PATH is a launcher. If the CLI stops only the launcher, the emulator keeps running. The npm scripts work around this. If you run `npx firebase emulators:*` yourself, put your JDK's `bin` folder first on PATH, or end the leftover `java` process.
-- **`java` not found:** only needed when running the local offline emulator (`npm run dev` / `npm run test:rules`). Install a JDK (21 or newer) and open a new terminal, or run `npm run setup` to deploy directly to Firebase without Java.
-- **`npm start` / `npm run build` says the copy is not connected:** run `npm run setup`, or use `npm run dev`.
-- **The room list stays empty right after the first deploy:** the composite index is still building. Wait a few minutes and reload.
-- **Google sign-in fails with `auth/unauthorized-domain`:** add your domain under _Authentication → Settings → Authorized domains_.
-- **"This sign-in method is not enabled":** enable Email/Password or Google under _Authentication → Sign-in method_.
-- **npm warns that install scripts were skipped:** newer npm versions skip package install scripts unless you approve them. Nothing in this kit needs them.
+Review [RULES.md](RULES.md) for branch naming conventions, commit formats, and repository standards.
 
-## Contributing
-
-See [RULES.md](RULES.md) for how this repository works: branches, commits, code rules, the security-rules checklist and the quality gates.
+---
 
 ## License
 
