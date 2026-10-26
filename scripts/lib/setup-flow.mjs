@@ -9,7 +9,7 @@ import {
 
 export class SetupError extends Error {}
 
-const APP_NAME = 'K-Chat Lite';
+const APP_NAME = 'K-Chat Toolkit';
 
 /**
  * Common Firestore locations. Every location has the same free quota; pick the

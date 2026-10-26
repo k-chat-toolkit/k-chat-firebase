@@ -82,24 +82,83 @@ You only need two things to deploy your chat app:
    - **Email/Password**
    - **Google** (select your support email).
 
-#### Step 2: Clone and run the setup wizard
+#### Step 2: Clone and configure (Choose Option A or Option B)
 
-Open your terminal and run:
+Open your terminal and clone the repository:
 
 ```bash
 git clone https://github.com/k-chat-toolkit/k-chat-firebase.git k-chat
 cd k-chat
 npm ci
+```
+
+Now, choose your preferred way to connect your Firebase project:
+
+##### Option A: Interactive Wizard (Recommended)
+
+Run the automated wizard which handles authentication, database creation, and configuration for you:
+
+```bash
 npm run setup
 ```
 
 The interactive wizard will:
 
 - Open a browser window to log in with your Google account.
-- Let you choose your Firebase project.
+- Let you choose your Firebase project from the list.
 - Automatically provision Cloud Firestore in your preferred region.
 - Write your client environment configuration.
 - Deploy the production security rules and composite indexes.
+
+##### Option B: Manual Configuration (Copy/Paste directly from Firebase Console)
+
+If you prefer not to sign in via the CLI or are on a headless/remote machine:
+
+1. **Get your web app config:**
+   - In the [Firebase Console](https://console.firebase.google.com), click the gear icon ⚙️ (**Project settings**).
+   - Under the **General** tab, scroll down to the **Your apps** section.
+   - Select your Web App and click **Config** (or **SDK setup and configuration**). You will see a block like:
+     ```javascript
+     const firebaseConfig = {
+       apiKey: 'AIzaSy...',
+       authDomain: 'my-chat.firebaseapp.com',
+       projectId: 'my-chat',
+       storageBucket: '...',
+       messagingSenderId: '123456789',
+       appId: '1:123456789:web:abcdef',
+     };
+     ```
+2. **Create `src/environments/environment.firebase.ts`:**
+   - Copy the template file `src/environments/environment.firebase.example.ts` to `src/environments/environment.firebase.ts`.
+   - Paste the matching values from your Firebase config:
+     ```typescript
+     import type { AppEnvironment } from './environment.model';
+
+     export const environment: AppEnvironment = {
+       firebase: {
+         apiKey: 'AIzaSy...',
+         authDomain: 'my-chat.firebaseapp.com',
+         projectId: 'my-chat',
+         appId: '1:123456789:web:abcdef',
+         messagingSenderId: '123456789',
+       },
+     };
+     ```
+3. **Create `.firebaserc`:**
+   - Copy `.firebaserc.example` to `.firebaserc`.
+   - Fill in your `projectId`:
+     ```json
+     {
+       "projects": {
+         "default": "my-chat"
+       }
+     }
+     ```
+4. **Deploy database rules and indexes:**
+   ```bash
+   npm run deploy:rules
+   npx firebase deploy --only firestore:indexes
+   ```
 
 #### Step 3: Deploy to the web
 
