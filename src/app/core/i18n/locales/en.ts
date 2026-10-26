@@ -5,7 +5,7 @@
  * value of `app.name`, so the app's name is defined once per locale.
  */
 export const en = {
-  'app.name': 'K-Chat Lite',
+  'app.name': 'K-Chat Toolkit (Firebase)',
 
   'common.cancel': 'Cancel',
   'common.save': 'Save',

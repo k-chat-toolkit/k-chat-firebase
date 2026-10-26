@@ -5,7 +5,7 @@ import { RoomService } from '@core/data/room.service';
 import { I18nService } from '@core/i18n/i18n.service';
 
 /**
- * The browser tab's title: "(2) #riders · K-Chat Lite". The count of rooms with
+ * The browser tab's title: "(2) #riders · K-Chat Toolkit (Firebase)". The count of rooms with
  * unread messages comes first, as in Slack, so a background tab shows activity.
  */
 @Injectable({ providedIn: 'root' })
