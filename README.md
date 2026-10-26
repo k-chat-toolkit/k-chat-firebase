@@ -1,27 +1,47 @@
-# K-Chat Lite
+# K-Chat Toolkit (Firebase)
 
-A slimmed-down chat app that you host yourself, on Firebase's free **Spark** plan: Angular on Firebase Hosting, Firebase Authentication and Cloud Firestore. There is no server to run and no bill to pay at low use. Clone it, connect it to your own Firebase project with one command, and deploy your own copy.
+A rapid-setup chat toolkit that you can deploy and host yourself in minutes, running entirely on Firebase's free **Spark** tier: Angular 22 on Firebase Hosting, Firebase Authentication, and Cloud Firestore.
 
-The UI follows Slack's layout, with fewer features, and speaks English and Vietnamese.
+There are no servers to maintain, no containers to run, and no billing requirements for normal usage. Clone the repo, run a single setup command to connect your Firebase project, and launch your ready-to-use chat application.
 
-- **Sign in** with email and password (with a password reset email) or with Google.
-- **Profile:** a display name, picked at the first sign-in. Avatars are initials on a color.
-- **Group rooms** that people join with an 8-character invite code or an invite link. The owner can rename the room, reset the code, remove members and delete the room. Members can leave.
-- **1-to-1 chats**, opened from the member list of a room you share.
-- **Realtime messages:** the newest 30 arrive live, older ones load 30 at a time as you scroll up. You can edit and delete your own messages; ↑ in an empty box edits your last one.
-- **Formatting, as in Slack:** `*bold*`, `_italic_`, `~strike~`, `` `code` ``, code blocks between ` ``` ` fences, `> quotes` and links. A message of only a few emoji shows them large.
-- **Emoji:** a picker with search in English and Vietnamese, `:name` autocomplete, and reactions on any message.
-- **Custom emoji:** anyone can add an image as `:name:`, for everyone in the app; each one shows who added it and when. The person who added it, or an admin, can delete it.
-- **Replies and @mentions:** reply to a message with a quote of it; type `@` to mention a member. Messages that mention you or reply to you are highlighted.
-- **Room list** sorted by latest activity, with a preview of the last message, unread markers, and `@` when an unread message mentions you. The tab title counts the rooms with unread messages.
-- **Desktop notifications** while the app is open in a background tab, for every message or only direct messages and mentions.
-- **English and Vietnamese UI**, switchable at any time, with no reload.
-- **Local mode:** `npm run dev` runs everything on the Firebase Emulator Suite. You need no Firebase account for it.
+The user interface follows a modern Slack-like layout, supports both English and Vietnamese out-of-the-box, and uses a modular `BackendCapabilities` architecture so unsupported or quota-heavy features are cleanly disabled.
+
+---
+
+## Feature Matrix & Plan Requirements
+
+The toolkit is designed to maximize what is possible on Firebase's free **Spark plan** without incurring unexpected charges. Features requiring paid upgrades (the Blaze pay-as-you-go plan) or server code are gracefully toggled off in the UI.
+
+| Feature Category      | Feature                                     | Spark Plan (Free) |           Blaze Plan / Paid Unlock            | Frontend State         |
+| :-------------------- | :------------------------------------------ | :---------------: | :-------------------------------------------: | :--------------------- |
+| **Authentication**    | Email & Password (with reset flow)          |    ✅ Included    |                   Included                    | Active                 |
+|                       | Google One-Click Sign-in                    |    ✅ Included    |                   Included                    | Active                 |
+| **Chat Spaces**       | 1-to-1 Direct Messaging                     |    ✅ Included    |                   Included                    | Active                 |
+|                       | Group Rooms (Code & Link Invite)            |    ✅ Included    |                   Included                    | Active                 |
+|                       | Owner Controls (Rename, Kick, Delete)       |    ✅ Included    |                   Included                    | Active                 |
+| **Messaging**         | Realtime Sync (30/page, scroll-up paging)   |    ✅ Included    |                   Included                    | Active                 |
+|                       | Edit & Soft-delete Own Messages             |    ✅ Included    |                   Included                    | Active                 |
+|                       | Slack-style Formatting Toolbar & Markdown   |    ✅ Included    |                   Included                    | Active                 |
+|                       | Reactions (`reactions.{uid}`)               |    ✅ Included    |                   Included                    | Active                 |
+|                       | Quote Replies & `@` Mentions                |    ✅ Included    |                   Included                    | Active                 |
+| **Emoji**             | Standard Unicode Picker & Autocomplete      |    ✅ Included    |                   Included                    | Active                 |
+|                       | Custom Emoji (Base64 in Firestore, max 200) |    ✅ Included    |                   Included                    | Active                 |
+| **Notifications**     | Desktop & Tab Badge Notifications           |    ✅ Included    |                   Included                    | Active (when tab open) |
+| **Media & Files**     | File & Image Attachments                    |   🔒 **Locked**   |     ⚡ **Requires Blaze** (Cloud Storage)     | Disabled with tooltip  |
+|                       | User Photo Avatars                          |   🔒 **Locked**   |   ⚡ **Requires Blaze** (Initials on Spark)   | Initials avatar        |
+| **Realtime Presence** | "User is typing..." Indicator               |   🔒 **Locked**   |    ⚡ High write frequency exhausts quota     | Disabled in config     |
+|                       | Online / Offline Status Badge               |   🔒 **Locked**   |    ⚡ Heartbeat writes exhaust Spark quota    | Disabled in config     |
+| **Push & Server**     | Mobile / Background Push Notifications      |   🔒 **Locked**   | ⚡ **Requires Blaze** (Cloud Functions / FCM) | Web notifications only |
+|                       | Server-side Data Export / Webhooks          |   🔒 **Locked**   |    ⚡ **Requires Blaze** (Cloud Functions)    | Client-side only       |
+
+---
 
 ## Contents
 
 - [Quick start](#quick-start)
+- [Feature Matrix & Plan Requirements](#feature-matrix--plan-requirements)
 - [Commands](#commands)
+- [Firebase CLI for Developers](#firebase-cli-for-developers)
 - [Config files](#config-files)
 - [Staying on the free plan](#staying-on-the-free-plan)
 - [What is not included, and why](#what-is-not-included-and-why)
@@ -35,90 +55,70 @@ The UI follows Slack's layout, with fewer features, and speaks English and Vietn
 ### What you need
 
 - **Node.js** 24.15 or newer (or 26+), with npm.
-- **Java** 21 or newer. The Firestore emulator runs on it; `npm run dev` and `npm run test:rules` need it.
-- **A Google account**, once you connect a real Firebase project.
+- **A Google account** (to connect your free Firebase project).
+- _(Optional)_ **Java** 21 or newer: Only needed if you want to run the local offline Firebase Emulator Suite (`npm run dev` or `npm run test:rules`). End-users deploying to Firebase do **not** need Java installed.
 
-The Firebase CLI comes with the project (`firebase-tools` in `devDependencies`), so you do not install it globally.
+The Firebase CLI comes bundled with this project (`firebase-tools` in `devDependencies`), so you do not need to install it globally.
 
-### 1. Try it locally, without a Firebase project
+### 1. Instant Setup & Deploy (Connect to Firebase in 1 Command)
 
-```bash
-git clone <this repository> k-chat
-cd k-chat
-npm ci
-npm run dev
-```
+To connect and deploy your app to Firebase:
 
-Then:
-
-1. Open http://localhost:4300 and create an account.
-   - Accounts and messages live in the local emulators only.
-   - They are kept in `.emulator-data/` between runs.
-2. To chat with yourself as a second user, open the same app in a private window, or at http://[::1]:4300. Each origin keeps its own sign-in.
-3. The Emulator UI at http://127.0.0.1:4000 shows the users and documents.
-4. Press Ctrl+C to stop. The emulators save their data on the way out.
-
-### 2. Connect your own Firebase project
-
-Do these four steps once.
-
-1. **Create a project.**
-   - In the [Firebase console](https://console.firebase.google.com), choose _Create a project_.
-   - Google Analytics is not needed.
-   - New projects start on the free Spark plan; stay on it.
-2. **Add a web app.**
-   - Open _Project settings → General → Your apps → Add app → Web_.
-   - Give it any name.
-   - You can skip Hosting setup and the config snippet; the next steps handle both.
-3. **Turn on sign-in.**
-   - Open _Build → Authentication → Get started → Sign-in method_.
-   - Enable **Email/Password**.
-   - Enable **Google**, and pick a support email.
-4. **Run setup:**
-
+1. **Create a project & turn on Auth:**
+   - In the [Firebase Console](https://console.firebase.google.com), click _Create a project_ (stay on the free Spark plan).
+   - Under _Build → Authentication → Sign-in method_, enable **Email/Password** and **Google**.
+2. **Install and run the interactive setup:**
    ```bash
+   git clone https://github.com/k-chat-toolkit/k-chat-firebase.git k-chat
+   cd k-chat
+   npm ci
    npm run setup
    ```
+   The interactive wizard signs in to Google, links your Firebase project, provisions Cloud Firestore, generates your config files, and deploys the production security rules and composite indexes automatically.
+3. **Run or publish:**
+   ```bash
+   npm start        # Launch locally on http://localhost:4300 against your Firebase project
+   npm run deploy   # Build and deploy to Firebase Hosting (https://<project-id>.web.app)
+   ```
 
-   It signs the Firebase CLI in to your Google account (a browser window opens the first time), then:
-   - lets you pick the project and its web app;
-   - writes your config into `src/environments/environment.firebase.ts` and `.firebaserc`;
-   - creates the Firestore database if the project has none (it asks for a location, which cannot be changed later; pick the one closest to your users);
-   - deploys the security rules and indexes: rooms, invites, messages, reactions, custom emoji and the admin list all work from the first sign-in;
-   - ends with the steps left, with links into your project's console, including how to make yourself an admin.
-
-   Run `npm run setup -- --help` for flags. You can use them to skip the questions, for example in CI.
-
-### 3. Run it on your project, then publish it
-
-```bash
-npm start        # http://localhost:4300, against your real project
-npm run deploy   # build + Hosting + rules + indexes
-```
-
-`npm run deploy` prints your site address, for example `https://<project-id>.web.app`.
+`npm run deploy` prints your live site address, for example `https://<project-id>.web.app`.
 
 - **First deploy:** the CLI may ask to create the default Hosting site. Answer yes.
 - **Right after the first deploy:** the composite index for the room list can take a few minutes to build. Until it is ready the room list stays empty, and the browser console says the index is building.
 - **Another domain:** if you serve the app from a domain other than `*.web.app` / `*.firebaseapp.com`, add it under _Authentication → Settings → Authorized domains_ so Google sign-in works there.
 - **Make yourself an admin:** sign in to the app once, then follow [Admins](#customizing) under _Customizing_. It takes a minute in the Firebase console.
 
+### 2. (Optional) Try Offline with the Emulator Suite
+
+If you have Java installed and wish to test offline without creating a Firebase account:
+
+```bash
+npm run dev
+```
+
+1. Open http://localhost:4300 and create a local account. Accounts and messages live in the local emulators only (persisted in `.emulator-data/`).
+2. To chat with a second user, open the app in a private/incognito window or at http://[::1]:4300.
+3. The Emulator UI at http://127.0.0.1:4000 lets you inspect local users and documents.
+4. Press `Ctrl+C` to stop. Emulators save data on exit.
+
 ## Commands
 
-| Command              | What it does                                                                                                                                                                  |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`        | Runs the Auth and Firestore emulators on the `demo-k-chat` project, plus `ng serve` against them. Needs no Firebase account.                                                  |
-| `npm run emulators`  | Runs the emulators alone, with the Emulator UI at http://127.0.0.1:4000.                                                                                                      |
-| `npm run setup`      | Connects this copy to your Firebase project: writes the config, creates the database, and deploys the rules and indexes.                                                      |
-| `npm start`          | Runs `ng serve` on http://localhost:4300 against your project. Needs `npm run setup` first.                                                                                   |
-| `npm run build`      | Builds for production into `dist/k-chat/browser`, with your project's config.                                                                                                 |
-| `npm run deploy`     | Builds, then deploys Hosting, the Firestore rules and the indexes to the project in `.firebaserc`.                                                                            |
-| `npm test`           | Runs the unit tests: the Angular app (Vitest) and the Node scripts (`node --test`).                                                                                           |
-| `npm run test:rules` | Runs the security rules suite against the Firestore emulator.                                                                                                                 |
-| `npm run lint`       | Runs ESLint, type-checks the rules suite, checks formatting with Prettier, and checks that the rules limits match `limits.json` and the emoji table matches `emojibase-data`. |
-| `npm run format`     | Formats every file with Prettier.                                                                                                                                             |
-| `npm run limits`     | Copies `firestore/limits.json` into the generated block of `firestore/firestore.rules`.                                                                                       |
-| `npm run emoji-data` | Rebuilds the emoji picker's table, `src/app/shared/emoji/unicode-emoji.json`, from the `emojibase-data` dev dependency.                                                       |
+| Command                  | What it does                                                                                                                                                                  |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`            | Runs the Auth and Firestore emulators on the `demo-k-chat` project, plus `ng serve` against them. Needs no Firebase account.                                                  |
+| `npm run emulators`      | Runs the emulators alone, with the Emulator UI at http://127.0.0.1:4000.                                                                                                      |
+| `npm run setup`          | Connects this copy to your Firebase project: writes the config, creates the database, and deploys the rules and indexes.                                                      |
+| `npm start`              | Runs `ng serve` on http://localhost:4300 against your project. Needs `npm run setup` first.                                                                                   |
+| `npm run build`          | Builds for production into `dist/k-chat/browser`, with your project's config.                                                                                                 |
+| `npm run deploy`         | Builds, then deploys Hosting, the Firestore rules and the indexes to the project in `.firebaserc`.                                                                            |
+| `npm run deploy:hosting` | Builds, then deploys only Hosting (skips rules and indexes for fast ~5–10s updates).                                                                                          |
+| `npm run deploy:rules`   | Deploys only Firestore security rules (no frontend rebuild).                                                                                                                  |
+| `npm test`               | Runs the unit tests: the Angular app (Vitest) and the Node scripts (`node --test`).                                                                                           |
+| `npm run test:rules`     | Runs the security rules suite against the Firestore emulator.                                                                                                                 |
+| `npm run lint`           | Runs ESLint, type-checks the rules suite, checks formatting with Prettier, and checks that the rules limits match `limits.json` and the emoji table matches `emojibase-data`. |
+| `npm run format`         | Formats every file with Prettier.                                                                                                                                             |
+| `npm run limits`         | Copies `firestore/limits.json` into the generated block of `firestore/firestore.rules`.                                                                                       |
+| `npm run emoji-data`     | Rebuilds the emoji picker's table, `src/app/shared/emoji/unicode-emoji.json`, from the `emojibase-data` dev dependency.                                                       |
 
 Dev servers use fixed ports, so they do not collide with another Angular app on 4200 or a service on 8080:
 
@@ -131,6 +131,91 @@ Dev servers use fixed ports, so they do not collide with another Angular app on 
 | Emulator UI | 4000 |
 
 To change a port, edit `firebase.json`, plus `src/environments/environment.ts` for the emulators, or `angular.json` for the app.
+
+## Firebase CLI for Developers
+
+For developers who manage deployments directly or want fast, granular control without running full pipeline checks, the bundled `firebase-tools` CLI can be invoked with `npx firebase` (or via dedicated npm scripts).
+
+### 1. Fast Hosting-Only Deployments
+
+When you only update Angular templates, styles, or frontend logic, skip redeploying Firestore rules and indexes for near-instant uploads (~5–10s):
+
+```bash
+# Using npm shortcut:
+npm run deploy:hosting
+
+# Or direct CLI with release note:
+npm run build
+npx firebase deploy --only hosting -m "Update Slack toolbar and composer styles"
+```
+
+### 2. Preview Channels (Zero-Risk Branch & PR Previews)
+
+Firebase Hosting Preview Channels allow you to test changes on a temporary live URL without touching production:
+
+```bash
+npm run build
+
+# Deploy to a preview channel (default expires in 7 days):
+npx firebase hosting:channel:deploy pr-feature-preview
+
+# Deploy with custom expiration (e.g. 24 hours):
+npx firebase hosting:channel:deploy pr-feature-preview --expires 24h
+```
+
+This outputs a dedicated URL (e.g., `https://<project-id>--pr-feature-preview-<hash>.web.app`).
+
+**Manage preview channels:**
+
+```bash
+# List all active preview channels:
+npx firebase hosting:channel:list
+
+# Delete a preview channel when done:
+npx firebase hosting:channel:delete pr-feature-preview
+```
+
+### 3. Deploy Security Rules or Indexes Only
+
+Modify and deploy database rules without touching or rebuilding the frontend application:
+
+```bash
+# Deploy Firestore security rules only:
+npm run deploy:rules
+# or:
+npx firebase deploy --only firestore:rules
+
+# Deploy Firestore indexes only:
+npx firebase deploy --only firestore:indexes
+```
+
+### 4. Managing Multi-Environment Projects (Dev / Staging / Prod)
+
+Easily switch targets between different Firebase projects using `.firebaserc` aliases:
+
+```bash
+# List all accessible Firebase projects:
+npx firebase projects:list
+
+# Check the currently active project:
+npx firebase use
+
+# Add an environment alias (e.g., 'staging' or 'prod'):
+npx firebase use --add
+
+# Switch to a target environment and deploy:
+npx firebase use prod
+npm run deploy
+```
+
+### 5. Instant Rollback
+
+If a bad frontend build goes to production, rollback instantly via Firebase Console (_Hosting → Release history → Roll back_) or clone a previous release tag:
+
+```bash
+# Clone a specific preview channel or version to live production:
+npx firebase hosting:clone <project-id>:<channel-or-version> <project-id>:live
+```
 
 ## Config files
 
@@ -305,7 +390,7 @@ The app uses the plain Firebase JS SDK with Angular signals: no AngularFire, so 
 - **`Could not start Firestore Emulator, port taken`**
   - Another emulator is still running. Stop it, or change the port in `firebase.json`.
   - On Windows with Oracle's Java, the `java` on PATH is a launcher. If the CLI stops only the launcher, the emulator keeps running. The npm scripts work around this. If you run `npx firebase emulators:*` yourself, put your JDK's `bin` folder first on PATH, or end the leftover `java` process.
-- **`java` not found:** install a JDK (21 or newer) and open a new terminal.
+- **`java` not found:** only needed when running the local offline emulator (`npm run dev` / `npm run test:rules`). Install a JDK (21 or newer) and open a new terminal, or run `npm run setup` to deploy directly to Firebase without Java.
 - **`npm start` / `npm run build` says the copy is not connected:** run `npm run setup`, or use `npm run dev`.
 - **The room list stays empty right after the first deploy:** the composite index is still building. Wait a few minutes and reload.
 - **Google sign-in fails with `auth/unauthorized-domain`:** add your domain under _Authentication → Settings → Authorized domains_.

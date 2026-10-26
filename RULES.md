@@ -22,10 +22,6 @@ How this repository works. The README explains how to use the kit; this file is 
 - Write subjects in English, in the imperative, without a trailing period. For example: `Cap invite queries in the rules`.
 - Keep the subject under 72 characters. Explain the _why_ in the body when the diff does not show it.
 - A merge commit keeps git's default subject.
-- **Authorship:**
-  - Commits carry the author's own name and email.
-  - No line names a tool, a bot or an AI model: no `Co-Authored-By:` trailer and no "Generated with" footer.
-  - Nothing in a branch name or a pull request does either.
 
 ## Code
 

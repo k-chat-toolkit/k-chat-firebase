@@ -20,7 +20,9 @@
     "format": "prettier --write .",
     "limits": "node scripts/sync-limits.mjs",
     "emoji-data": "node scripts/emoji-data.mjs",
-    "deploy": "node scripts/check-config.mjs --deploy && ng build && firebase deploy --only hosting,firestore:rules,firestore:indexes"
+    "deploy": "node scripts/check-config.mjs --deploy && ng build && firebase deploy --only hosting,firestore:rules,firestore:indexes",
+    "deploy:hosting": "node scripts/check-config.mjs --deploy && ng build && firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@angular/common": "22.2.2",

@@ -12,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { BACKEND_CAPABILITIES } from '@core/backend/backend-capabilities';
 import { CustomEmojiService } from '@core/data/custom-emoji.service';
 import type { MessageFeed } from '@core/data/message-feed';
 import { MessageService } from '@core/data/message.service';
@@ -68,6 +69,7 @@ export class MessageItem {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly document = inject(DOCUMENT);
   protected readonly i18n = inject(I18nService);
+  protected readonly capabilities = inject(BACKEND_CAPABILITIES);
   protected readonly t = this.i18n.t;
 
   readonly message = input.required<ChatMessage>();
@@ -109,10 +111,27 @@ export class MessageItem {
   });
 
   protected readonly mine = computed(() => this.message().senderId === this.auth.user()?.uid);
-  protected readonly canChange = computed(
-    () => this.mine() && !this.message().deleted && !this.message().pending,
+  protected readonly canEdit = computed(
+    () =>
+      this.capabilities.editMessage &&
+      this.mine() &&
+      !this.message().deleted &&
+      !this.message().pending,
   );
-  protected readonly canReact = computed(() => !this.message().deleted && !this.message().pending);
+  protected readonly canDelete = computed(
+    () =>
+      this.capabilities.deleteMessage &&
+      this.mine() &&
+      !this.message().deleted &&
+      !this.message().pending,
+  );
+  protected readonly canChange = computed(() => this.canEdit() || this.canDelete());
+  protected readonly canReply = computed(
+    () => this.capabilities.replies && !this.message().deleted && !this.message().pending,
+  );
+  protected readonly canReact = computed(
+    () => this.capabilities.reactions && !this.message().deleted && !this.message().pending,
+  );
   protected readonly reactions = computed(() =>
     groupReactions(this.message().reactions, this.auth.user()?.uid ?? ''),
   );

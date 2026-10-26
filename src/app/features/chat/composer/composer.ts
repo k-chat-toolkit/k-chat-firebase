@@ -10,6 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
+import { BACKEND_CAPABILITIES } from '@core/backend/backend-capabilities';
 import { CustomEmojiService } from '@core/data/custom-emoji.service';
 import { ProfileService } from '@core/data/profile.service';
 import { RecentEmojiService } from '@core/data/recent-emoji.service';
@@ -23,6 +24,7 @@ import {
 } from '@shared/emoji/unicode-emoji';
 import { Avatar } from '@shared/ui/avatar/avatar';
 import { Icon } from '@shared/ui/icon/icon';
+import { applyFormat, type FormatKind } from '@shared/utils/composer-format';
 import { encodeMentions, type MentionCandidate } from '@shared/utils/mentions';
 import { EmojiPicker } from '../emoji-picker/emoji-picker';
 
@@ -82,6 +84,7 @@ export class Composer {
   private readonly profiles = inject(ProfileService);
   private readonly recentEmoji = inject(RecentEmojiService);
   private readonly i18n = inject(I18nService);
+  protected readonly capabilities = inject(BACKEND_CAPABILITIES);
   protected readonly t = this.i18n.t;
 
   readonly placeholder = input('');
@@ -278,6 +281,40 @@ export class Composer {
       .sort((a, b) => a.rank - b.rank || a.suggestion.label.localeCompare(b.suggestion.label))
       .slice(0, MAX_SUGGESTIONS)
       .map((item) => item.suggestion);
+  }
+
+  /** Applies Slack-style formatting (bold, italic, strike, code, quote) to selection. */
+  format(kind: FormatKind): void {
+    const element = this.textarea().nativeElement;
+    const start = element.selectionStart ?? 0;
+    const end = element.selectionEnd ?? 0;
+    const result = applyFormat(this.text(), start, end, kind);
+    this.text.set(result.text);
+    element.value = result.text;
+    this.resize();
+    element.focus();
+    element.setSelectionRange(result.selectionStart, result.selectionEnd);
+    this.updateTrigger();
+  }
+
+  /** Inserts a "@" token at cursor and focuses to trigger member autocomplete. */
+  insertMention(): void {
+    const element = this.textarea().nativeElement;
+    const start = element.selectionStart ?? 0;
+    const end = element.selectionEnd ?? 0;
+    const current = this.text();
+    const before = current.slice(0, start);
+    const after = current.slice(end);
+    const needsSpace = before.length > 0 && !/\s$/.test(before);
+    const token = needsSpace ? ' @' : '@';
+    const nextText = before + token + after;
+    this.text.set(nextText);
+    element.value = nextText;
+    this.resize();
+    element.focus();
+    const nextPos = start + token.length;
+    element.setSelectionRange(nextPos, nextPos);
+    this.updateTrigger();
   }
 
   private replace(start: number, end: number, insert: string): void {

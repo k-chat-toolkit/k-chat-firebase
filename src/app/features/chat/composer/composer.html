@@ -53,6 +53,65 @@
       </button>
     </div>
   }
+  @if (capabilities.formattingToolbar) {
+    <div class="formatting-bar" role="toolbar" [attr.aria-label]="t('composer.formatToolbar')">
+      <button
+        type="button"
+        class="tool"
+        [attr.title]="t('composer.bold')"
+        [attr.aria-label]="t('composer.bold')"
+        (click)="format('bold')"
+      >
+        <app-icon name="bold" [size]="14" />
+      </button>
+      <button
+        type="button"
+        class="tool"
+        [attr.title]="t('composer.italic')"
+        [attr.aria-label]="t('composer.italic')"
+        (click)="format('italic')"
+      >
+        <app-icon name="italic" [size]="14" />
+      </button>
+      <button
+        type="button"
+        class="tool"
+        [attr.title]="t('composer.strike')"
+        [attr.aria-label]="t('composer.strike')"
+        (click)="format('strike')"
+      >
+        <app-icon name="strikethrough" [size]="14" />
+      </button>
+      <span class="toolbar-sep" aria-hidden="true"></span>
+      <button
+        type="button"
+        class="tool"
+        [attr.title]="t('composer.code')"
+        [attr.aria-label]="t('composer.code')"
+        (click)="format('code')"
+      >
+        <app-icon name="code" [size]="14" />
+      </button>
+      <button
+        type="button"
+        class="tool"
+        [attr.title]="t('composer.codeblock')"
+        [attr.aria-label]="t('composer.codeblock')"
+        (click)="format('codeblock')"
+      >
+        <span class="codeblock-badge">&lt;/&gt;</span>
+      </button>
+      <button
+        type="button"
+        class="tool"
+        [attr.title]="t('composer.quote')"
+        [attr.aria-label]="t('composer.quote')"
+        (click)="format('quote')"
+      >
+        <app-icon name="quote" [size]="14" />
+      </button>
+    </div>
+  }
   <textarea
     #textarea
     rows="1"
@@ -69,18 +128,51 @@
     (click)="onCaretMove()"
   ></textarea>
   <div class="bar">
-    <button
-      #emojiButton
-      type="button"
-      class="tool"
-      aria-haspopup="dialog"
-      [attr.aria-expanded]="pickerAnchor() !== null"
-      [attr.aria-label]="t('composer.emoji')"
-      [attr.title]="t('composer.emoji')"
-      (click)="togglePicker(emojiButton)"
-    >
-      <app-icon name="smile" [size]="18" />
-    </button>
+    <div class="bar-tools">
+      @if (capabilities.attachments) {
+        <button
+          type="button"
+          class="tool"
+          [attr.aria-label]="t('composer.attach')"
+          [attr.title]="t('composer.attach')"
+        >
+          <app-icon name="attach" [size]="16" />
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="tool tool-disabled"
+          disabled
+          [attr.aria-label]="t('composer.attachDisabled')"
+          [attr.title]="t('composer.attachDisabled')"
+        >
+          <app-icon name="attach" [size]="16" />
+        </button>
+      }
+      @if (capabilities.mentions) {
+        <button
+          type="button"
+          class="tool"
+          [attr.aria-label]="t('composer.mention')"
+          [attr.title]="t('composer.mention')"
+          (click)="insertMention()"
+        >
+          <app-icon name="at" [size]="16" />
+        </button>
+      }
+      <button
+        #emojiButton
+        type="button"
+        class="tool"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="pickerAnchor() !== null"
+        [attr.aria-label]="t('composer.emoji')"
+        [attr.title]="t('composer.emoji')"
+        (click)="togglePicker(emojiButton)"
+      >
+        <app-icon name="smile" [size]="18" />
+      </button>
+    </div>
     <span class="hint" [class.hint-error]="left() < 0" aria-live="polite">
       @if (left() < 0) {
         {{ t('common.charactersOver', { count: -left() }) }}

@@ -8,10 +8,6 @@
 firebase-debug.*.log
 /.firebase/
 
-# Local notes, not part of the kit
-/CLAUDE.md
-/.claude/
-
 # Compiled output
 /dist
 /tmp

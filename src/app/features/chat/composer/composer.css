@@ -93,6 +93,40 @@
   font-size: 13px;
 }
 
+.formatting-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.box .reply-bar + .formatting-bar {
+  border-radius: 0;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--border);
+}
+
+.codeblock-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .reply-text {
   display: flex;
   flex: 1;
@@ -156,6 +190,18 @@ textarea:focus {
 .tool[aria-expanded='true'] {
   background: var(--surface-hover);
   color: var(--text);
+}
+
+.tool.tool-disabled,
+.tool:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tool.tool-disabled:hover,
+.tool:disabled:hover {
+  background: transparent;
+  color: var(--text-muted);
 }
 
 .send {

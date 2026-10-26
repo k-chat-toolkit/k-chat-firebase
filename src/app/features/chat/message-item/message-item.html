@@ -127,7 +127,7 @@
   <app-emoji-picker [anchor]="anchor" (picked)="onPicked($event)" (closed)="closePicker()" />
 }
 
-@if ((canReact() || canChange()) && !editing()) {
+@if ((canReact() || canReply() || canChange()) && !editing()) {
   <div class="toolbar">
     @if (canReact()) {
       @for (key of quickReactions(); track key) {
@@ -153,6 +153,8 @@
       >
         <app-icon name="reaction" [size]="16" />
       </button>
+    }
+    @if (canReply()) {
       <button
         type="button"
         class="icon-btn"
@@ -163,7 +165,7 @@
         <app-icon name="reply" [size]="16" />
       </button>
     }
-    @if (canChange()) {
+    @if (canEdit()) {
       <button
         type="button"
         class="icon-btn"
@@ -173,6 +175,8 @@
       >
         <app-icon name="edit" [size]="16" />
       </button>
+    }
+    @if (canDelete()) {
       <button
         type="button"
         class="icon-btn"

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
+import { BACKEND_CAPABILITIES } from '@core/backend/backend-capabilities';
 import { ProfileService } from '@core/data/profile.service';
 import { ReadMarkersService } from '@core/data/read-markers.service';
 import { RoomService } from '@core/data/room.service';
@@ -25,6 +26,7 @@ export class Sidebar {
   protected readonly rooms = inject(RoomService);
   protected readonly profiles = inject(ProfileService);
   protected readonly readMarkers = inject(ReadMarkersService);
+  protected readonly capabilities = inject(BACKEND_CAPABILITIES);
   protected readonly t = inject(I18nService).t;
 
   protected uid(): string {

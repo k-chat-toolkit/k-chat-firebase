@@ -146,6 +146,16 @@ export const en = {
 
   'composer.emoji': 'Emoji',
   'composer.suggestions': 'Suggestions',
+  'composer.formatToolbar': 'Formatting options',
+  'composer.bold': 'Bold (*text*)',
+  'composer.italic': 'Italic (_text_)',
+  'composer.strike': 'Strikethrough (~text~)',
+  'composer.code': 'Inline code (`code`)',
+  'composer.codeblock': 'Code block (```code```)',
+  'composer.quote': 'Quote (> text)',
+  'composer.mention': 'Mention member (@)',
+  'composer.attach': 'Attach file',
+  'composer.attachDisabled': 'File attachments are disabled on this plan',
 
   'reactions.add': 'Add reaction',
   'reactions.react': 'React with {emoji}',

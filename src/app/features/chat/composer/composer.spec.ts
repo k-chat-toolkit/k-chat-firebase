@@ -127,4 +127,27 @@ describe('Composer', () => {
     expect(press({ key: 'ArrowUp' }).defaultPrevented).toBe(false);
     expect(asked).toBe(1);
   });
+
+  it('formats text with bold when bold button is clicked', async () => {
+    await type('hello');
+    textarea.selectionStart = 0;
+    textarea.selectionEnd = 5;
+    const boldButton: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      'button[aria-label="Bold (*text*)"]',
+    );
+    expect(boldButton).not.toBeNull();
+    boldButton?.click();
+    await fixture.whenStable();
+    expect(textarea.value).toBe('*hello*');
+  });
+
+  it('inserts @ token when mention button is clicked', async () => {
+    const mentionButton: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      'button[aria-label="Mention member (@)"]',
+    );
+    expect(mentionButton).not.toBeNull();
+    mentionButton?.click();
+    await fixture.whenStable();
+    expect(textarea.value).toBe('@');
+  });
 });

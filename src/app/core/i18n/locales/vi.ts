@@ -144,6 +144,16 @@ export const vi: Translations = {
 
   'composer.emoji': 'Emoji',
   'composer.suggestions': 'Gợi ý',
+  'composer.formatToolbar': 'Tùy chọn định dạng',
+  'composer.bold': 'In đậm (*chữ*)',
+  'composer.italic': 'In nghiêng (_chữ_)',
+  'composer.strike': 'Gạch ngang (~chữ~)',
+  'composer.code': 'Mã dòng (`code`)',
+  'composer.codeblock': 'Khối mã (```mã```)',
+  'composer.quote': 'Trích dẫn (> chữ)',
+  'composer.mention': 'Nhắc tên thành viên (@)',
+  'composer.attach': 'Đính kèm tệp',
+  'composer.attachDisabled': 'Tính năng đính kèm tệp bị tắt trên gói này',
 
   'reactions.add': 'Thả cảm xúc',
   'reactions.react': 'Thả {emoji}',
